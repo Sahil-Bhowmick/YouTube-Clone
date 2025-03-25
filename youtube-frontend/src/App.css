@@ -1,0 +1,15 @@
+/* Chrome, Safari, Edge */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Optional fallback for older browsers */
+.custom-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+}
