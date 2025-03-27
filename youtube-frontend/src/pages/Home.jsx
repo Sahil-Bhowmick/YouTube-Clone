@@ -1,10 +1,10 @@
 import React from "react";
-import YouTubeLayout from "../components/YouTubeLayout";
+import HomePage from "../components/HomePage";
 
 const Home = () => {
   return (
     <div>
-      <YouTubeLayout />
+      <HomePage />
     </div>
   );
 };

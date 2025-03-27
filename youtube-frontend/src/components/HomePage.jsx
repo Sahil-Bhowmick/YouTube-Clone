@@ -133,7 +133,7 @@ export default function HomePage() {
       </div>
 
       {/* Video Grid */}
-      <div className="grid gap-6 p-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-grow">
+      <div className="grid gap-6 p-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-grow">
         {Array.from({ length: videoCount }).map((_, idx) => (
           <div key={idx} className="cursor-pointer group animate-fadeIn">
             <div className="relative aspect-video rounded-lg overflow-hidden bg-[#222]">
