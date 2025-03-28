@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import "./App.css";
 import VideoPage from "./pages/VideoPage";
+import Profile from "./pages/Profile";
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,6 +33,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/watch/:id" element={<VideoPage />} />
+            <Route path="/user/:id" element={<Profile />} />
           </Routes>
         </main>
       </div>

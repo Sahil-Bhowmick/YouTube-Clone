@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Menu, Search, Mic, Bell } from "lucide-react";
 import YouTubeImg from "../assets/youtube.png";
+import { Link } from "react-router-dom";
 
 export default function Navbar({ setMobileMenuOpen }) {
   const [showProfileTooltip, setShowProfileTooltip] = useState(false);
@@ -13,7 +14,10 @@ export default function Navbar({ setMobileMenuOpen }) {
         <button onClick={() => setMobileMenuOpen(true)} className="md:hidden">
           <Menu className="text-white" />
         </button>
-        <div className="flex items-center space-x-1 relative cursor-pointer">
+        <Link
+          to={"/"}
+          className="flex items-center space-x-1 relative cursor-pointer"
+        >
           <img src={YouTubeImg} alt="YouTube" className="h-9" />
           <div className="relative hidden md:block">
             <span className="text-white text-xl font-semibold">YouTube</span>
@@ -21,7 +25,7 @@ export default function Navbar({ setMobileMenuOpen }) {
               IN
             </span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Middle - Search */}

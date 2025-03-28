@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
+import { Link } from "react-router-dom";
 export default function HomePage() {
   const categories = [
     "All",
@@ -90,7 +90,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#0f0f0f] text-white">
       {/* Categories Carousel */}
-      <div className="flex items-center gap-2 px-4 py-3 sticky top-0 z-10 bg-[#0f0f0f] backdrop-blur-md shadow-[inset_0px_-1px_2px_rgba(255,255,255,0.05)]">
+      <div className="flex items-center gap-2 px-4 py-5 mt-3 sticky top-0 z-10 bg-[#0f0f0f] backdrop-blur-md shadow-[inset_0px_-1px_2px_rgba(255,255,255,0.05)]">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
           disabled={page === 0}
@@ -133,7 +133,10 @@ export default function HomePage() {
       </div>
 
       {/* Video Grid */}
-      <div className="grid gap-6 p-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-grow">
+      <Link
+        to={"/watch/1234"}
+        className="grid gap-6 p-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-grow"
+      >
         {Array.from({ length: videoCount }).map((_, idx) => (
           <div key={idx} className="cursor-pointer group animate-fadeIn">
             <div className="relative aspect-video rounded-lg overflow-hidden bg-[#222]">
@@ -181,7 +184,7 @@ export default function HomePage() {
             </div>
           </div>
         ))}
-      </div>
+      </Link>
 
       {/* Loader Observer */}
       <div ref={loaderRef} className="h-20 flex items-center justify-center">
