@@ -26,6 +26,9 @@ const commentsData = [
 ];
 
 const VideoPage = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [comment, setComment] = useState("");
   const [focused, setFocused] = useState(false);

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function SidebarItem({
   icon,
@@ -6,16 +7,18 @@ export default function SidebarItem({
   sidebarOpen,
   active,
   onClick,
+  route,
 }) {
   return (
-    <div
+    <Link
+      to={route}
+      onClick={onClick}
       className={`flex items-center cursor-pointer p-2 rounded hover:bg-[#222] ${
         active ? "bg-[#222]" : ""
       }`}
-      onClick={onClick}
     >
       <div className="text-white mr-3">{icon}</div>
       {sidebarOpen && <span className="text-sm text-white">{label}</span>}
-    </div>
+    </Link>
   );
 }

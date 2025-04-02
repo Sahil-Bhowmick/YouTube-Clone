@@ -90,7 +90,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#0f0f0f] text-white">
       {/* Categories Carousel */}
-      <div className="flex items-center gap-2 px-4 py-5 mt-3 sticky top-0 z-10 bg-[#0f0f0f] backdrop-blur-md shadow-[inset_0px_-1px_2px_rgba(255,255,255,0.05)]">
+      <div className="flex items-center gap-2 px-4 py-5 mt-3 sticky top-0 z-40 bg-[#0f0f0f] backdrop-blur-md shadow-[inset_0px_-1px_2px_rgba(255,255,255,0.05)]">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
           disabled={page === 0}

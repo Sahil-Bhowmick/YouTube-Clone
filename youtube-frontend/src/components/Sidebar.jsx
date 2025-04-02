@@ -51,7 +51,7 @@ const sidebarSections = [
   {
     title: "",
     items: [
-      { id: "home", icon: <Home />, label: "Home" },
+      { id: "home", icon: <Home />, label: "Home", route: "/" },
       {
         id: "shorts",
         icon: <SiYoutubeshorts className="text-xl" />,
@@ -90,7 +90,12 @@ const sidebarSections = [
   {
     title: "Creator Studio",
     items: [
-      { id: "studio", icon: <Video />, label: "Upload video" },
+      {
+        id: "studio",
+        icon: <Video />,
+        label: "Upload video",
+        route: "/:id/upload",
+      },
       { id: "live", icon: <Radio />, label: "Go live" },
       { id: "post", icon: <PencilLine />, label: "Create post" },
     ],
@@ -104,6 +109,7 @@ export default function Sidebar({
   setMobileMenuOpen,
   activeItem,
   setActiveItem,
+  route,
 }) {
   const renderSubscriptions = () => (
     <>
@@ -164,6 +170,7 @@ export default function Sidebar({
                         label={item.label}
                         sidebarOpen={sidebarOpen}
                         active={activeItem === item.id}
+                        route={item.route}
                         onClick={() => setActiveItem(item.id)}
                       />
                     ))}
@@ -179,7 +186,7 @@ export default function Sidebar({
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed inset-0 z-20 transition-all duration-300 ${
+        className={`fixed inset-0 z-[999] transition-all duration-300 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } md:hidden flex`}
       >
@@ -200,7 +207,7 @@ export default function Sidebar({
           <div className="flex justify-between items-center mb-6">
             <span className="text-xl font-semibold text-white">Menu</span>
             <button onClick={() => setMobileMenuOpen(false)}>
-              <X className="text-white" />
+              <X className="text-white" size={24} />
             </button>
           </div>
 
