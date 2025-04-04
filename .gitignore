@@ -1,0 +1,39 @@
+# Ignore node_modules (very important!)
+node_modules/
+
+# Ignore environment variables
+.env
+
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore build and cache files
+dist/
+build/
+.cache/
+.DS_Store
+
+# Ignore IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore dependencies installed via package-lock.json
+package-lock.json
+
+# Ignore compiled files
+*.out
+*.exe
+*.class
+
+# Ignore coverage reports
+coverage/
+
+# Ignore local database files
+*.sqlite
+*.db
