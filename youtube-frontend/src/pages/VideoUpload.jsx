@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
+import axios from "axios";
 import { AiOutlineCloudUpload } from "react-icons/ai";
 import { IoMdClose } from "react-icons/io";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const VideoUpload = ({ onClose }) => {
   const [videoFile, setVideoFile] = useState(null);
@@ -16,7 +17,13 @@ const VideoUpload = ({ onClose }) => {
   const [category, setCategory] = useState("");
   const navigate = useNavigate();
 
-  // Video Upload
+  const cloudinaryPreset = "youtube-clone";
+  const cloudinaryVideoUrl =
+    "https://api.cloudinary.com/v1_1/deye1inp8/video/upload";
+  const cloudinaryImageUrl =
+    "https://api.cloudinary.com/v1_1/deye1inp8/image/upload";
+
+  // Video Upload Dropzone
   const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps } =
     useDropzone({
       accept: { "video/*": [] },
@@ -30,7 +37,7 @@ const VideoUpload = ({ onClose }) => {
       },
     });
 
-  // Thumbnail Upload
+  // Thumbnail Upload Dropzone
   const {
     getRootProps: getThumbnailRootProps,
     getInputProps: getThumbnailInputProps,
@@ -46,27 +53,73 @@ const VideoUpload = ({ onClose }) => {
     },
   });
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!videoFile || !thumbnailFile) {
       alert("Please select both a video and a thumbnail.");
       return;
     }
+
     setUploading(true);
     setProgress(0);
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            alert("Upload complete!");
-            resetForm();
-          }, 500);
-          return 100;
-        }
-        return prev + 5;
+    try {
+      let overallProgress = 0;
+
+      // Function to update progress dynamically
+      const updateProgress = (progress, weight) => {
+        overallProgress += (progress * weight) / 100;
+        setProgress(Math.min(100, Math.round(overallProgress)));
+      };
+
+      const videoData = new FormData();
+      videoData.append("file", videoFile);
+      videoData.append("upload_preset", cloudinaryPreset);
+
+      const videoResponse = await axios.post(cloudinaryVideoUrl, videoData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted =
+            (progressEvent.loaded / progressEvent.total) * 70;
+          updateProgress(percentCompleted, 70);
+        },
       });
-    }, 300);
+
+      const videoUrl = videoResponse.data.secure_url;
+      setProgress(70);
+      const imageData = new FormData();
+      imageData.append("file", thumbnailFile);
+      imageData.append("upload_preset", cloudinaryPreset);
+
+      const imageResponse = await axios.post(cloudinaryImageUrl, imageData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted =
+            (progressEvent.loaded / progressEvent.total) * 30;
+          updateProgress(percentCompleted, 30);
+        },
+      });
+
+      const thumbnailUrl = imageResponse.data.secure_url;
+      setProgress(100);
+
+      console.log("Video URL:", videoUrl);
+      console.log("Thumbnail URL:", thumbnailUrl);
+
+      // Show success alert after both uploads are complete
+      setTimeout(() => {
+        alert(
+          "Upload successful! 🎉 Your video and thumbnail have been uploaded."
+        );
+      }, 200);
+
+      resetForm();
+    } catch (error) {
+      console.error(
+        "Upload failed:",
+        error.response ? error.response.data : error.message
+      );
+      alert("Upload failed. Please try again.");
+    }
+
+    setUploading(false);
   };
 
   const resetForm = () => {
@@ -78,6 +131,7 @@ const VideoUpload = ({ onClose }) => {
     setThumbnailPreview(null);
     setTitle("");
     setDescription("");
+    setCategory("");
     if (onClose) onClose();
   };
 
@@ -213,17 +267,6 @@ const VideoUpload = ({ onClose }) => {
         </div>
 
         {/* Upload Button */}
-        {/* <button
-          onClick={handleUpload}
-          disabled={uploading}
-          className={`mt-5 w-full py-2 text-white font-medium rounded-lg transition ${
-            uploading
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-red-500 hover:bg-red-700"
-          }`}
-        >
-          {uploading ? "Uploading..." : "Upload Video"}
-        </button> */}
         <div className="mt-5 flex gap-4">
           {/* Upload Button */}
           <button
@@ -248,12 +291,26 @@ const VideoUpload = ({ onClose }) => {
         </div>
 
         {/* Progress Bar */}
-        {uploading && (
+        {/* {uploading && (
           <div className="mt-4 w-full bg-gray-700 h-2 rounded">
             <div
               className="h-2 bg-red-500 rounded transition-all"
               style={{ width: `${progress}%` }}
             ></div>
+          </div>
+        )} */}
+        {/* Progress Bar */}
+        {uploading && (
+          <div className="mt-4">
+            <div className="relative w-full bg-gray-700 h-3 rounded-lg overflow-hidden">
+              <div
+                className="absolute top-0 left-0 h-full bg-red-500 transition-all duration-500 ease-in-out"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-sm text-gray-300 mt-2">
+              Uploading... {progress}%
+            </p>
           </div>
         )}
       </div>

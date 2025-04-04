@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Mail, Lock, User } from "lucide-react";
 import YouTubeImg from "../assets/youtube.png";
+import axios from "axios";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,13 +21,64 @@ const AuthPage = () => {
     }));
   };
 
-  const handleProfileImageChange = (e) => {
+  // const handleProfileImageChange = async (e) => {
+  //   const file = e.target.files[0];
+  //   const data = new formData();
+  //   data.append("file", file[0]);
+  //   data.append("upload_preset", "youtube-clone");
+  //   try {
+  //     // cloudName = "deye1inp8";
+  //     const response = await axios.post(
+  //       "https://api.cloudinary.com/v1_1/deye1inp8/image/upload",
+  //       data
+  //     )
+  //     const imageUrl = response.data.url;
+  //     console.log(response);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+
+  //   if (file) {
+  //     setFormData((prevState) => ({
+  //       ...prevState,
+  //       profileImage: URL.createObjectURL(file),
+  //     }));
+  //   }
+  // };
+
+  const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        profileImage: URL.createObjectURL(file),
-      }));
+    if (!file) {
+      console.error("No file selected.");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", "youtube-clone");
+
+    try {
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/deye1inp8/image/upload",
+        data
+      );
+
+      const imageUrl = response.data.secure_url;
+
+      if (imageUrl) {
+        setFormData((prevState) => ({
+          ...prevState,
+          profileImage: imageUrl,
+        }));
+        console.log("Image uploaded successfully:", imageUrl);
+      } else {
+        console.error("Upload failed, no URL returned.");
+      }
+    } catch (err) {
+      console.error(
+        "Image upload failed:",
+        err.response ? err.response.data : err.message
+      );
     }
   };
 
@@ -199,7 +251,7 @@ const AuthPage = () => {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, profileImage: null }))
                     }
-                    className="mt-1 text-xs text-[#FF0000] hover:text-[#cc0000] transition cursor-pointer"
+                    className="mt-1 text-base text-[#FF0000] hover:text-[#cc0000] transition cursor-pointer"
                   >
                     Remove Image
                   </button>
