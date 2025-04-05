@@ -6,6 +6,7 @@ import axios from "axios";
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -20,31 +21,6 @@ const AuthPage = () => {
       [name]: value,
     }));
   };
-
-  // const handleProfileImageChange = async (e) => {
-  //   const file = e.target.files[0];
-  //   const data = new formData();
-  //   data.append("file", file[0]);
-  //   data.append("upload_preset", "youtube-clone");
-  //   try {
-  //     // cloudName = "deye1inp8";
-  //     const response = await axios.post(
-  //       "https://api.cloudinary.com/v1_1/deye1inp8/image/upload",
-  //       data
-  //     )
-  //     const imageUrl = response.data.url;
-  //     console.log(response);
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-
-  //   if (file) {
-  //     setFormData((prevState) => ({
-  //       ...prevState,
-  //       profileImage: URL.createObjectURL(file),
-  //     }));
-  //   }
-  // };
 
   const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
@@ -95,6 +71,7 @@ const AuthPage = () => {
   const handleSignupSubmit = (e) => {
     e.preventDefault();
     if (
+      !formData.username ||
       !formData.email ||
       !formData.password ||
       !formData.confirmPassword ||
@@ -113,6 +90,7 @@ const AuthPage = () => {
     }
     console.log(
       "Signing up with:",
+      formData.username,
       formData.email,
       formData.password,
       formData.channelName,
@@ -191,6 +169,24 @@ const AuthPage = () => {
                     onChange={handleChange}
                     className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
                     placeholder="Confirm your password"
+                  />
+                </div>
+              </div>
+              {/* Username Section */}
+              <div>
+                <label htmlFor="username" className="block text-sm text-[#aaa]">
+                  Username
+                </label>
+                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                  <User className="text-[#bbb] ml-2" />
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                    placeholder="Enter your username"
                   />
                 </div>
               </div>

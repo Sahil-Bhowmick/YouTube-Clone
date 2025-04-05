@@ -1,22 +1,20 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
-// Import database connection
-// import("./Connection/conn.js");
-
-// Import Routes
-// import AuthRoutes from "./Routes/user.js";
-// import VideoRoutes from "./Routes/video.js";
-// import CommentRoutes from "./Routes/comment.js";
+import connectDB from "./connection/connection.js";
+import userRoutes from "./routes/userRoutes.js";
+import videoRoutes from "./routes/videoRoutes.js";
 
 const app = express();
 const port = 4000;
 
+// Connect to MongoDB
+connectDB();
+
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:3000", // Your React app's URL
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -25,9 +23,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Define Routes
-// app.use("/auth", AuthRoutes);
-// app.use("/api", VideoRoutes);
-// app.use("/commentApi", CommentRoutes);
+app.use("/auth", userRoutes);
+app.use("/api", videoRoutes);
+// app.use("/commentApi", commentRoutes);
 
 // Start Server with Improved Logging
 app
