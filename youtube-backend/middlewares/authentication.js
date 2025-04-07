@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
-const JWT_SECRET = "your_jwt_secret_key"; // use process.env.JWT_SECRET in production
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const auth = async (req, res, next) => {
   const token = req.cookies?.token;
@@ -18,10 +18,18 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ error: "User not found" });
     }
 
-    req.user = user; // Attach user to request
+    req.user = user;
     req.userId = user._id;
     next();
   } catch (err) {
+    console.error("JWT verification error:", err.message); // helpful log
+
+    if (err.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ error: "Token expired. Please login again." });
+    }
+
     return res.status(401).json({ error: "Token is not valid" });
   }
 };

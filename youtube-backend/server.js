@@ -1,33 +1,44 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import dotenv from "dotenv";
+import helmet from "helmet";
 import connectDB from "./connection/connection.js";
 import userRoutes from "./routes/userRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
+
+dotenv.config();
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 // Connect to MongoDB
 connectDB();
 
 // Middleware
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
-
+app.use(helmet());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Define Routes
+// Routes
 app.use("/auth", userRoutes);
 app.use("/api", videoRoutes);
-// app.use("/commentApi", commentRoutes);
+app.use("/api", commentRoutes);
 
-// Start Server with Improved Logging
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+// Start server
 app
   .listen(port, () => {
     console.log(`🚀 Server is running at: http://localhost:${port}`);
