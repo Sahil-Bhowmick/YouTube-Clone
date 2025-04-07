@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Mail, Lock, User } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import YouTubeImg from "../assets/youtube.png";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
@@ -12,7 +16,10 @@ const AuthPage = () => {
     confirmPassword: "",
     profileImage: null,
     channelName: "",
+    about: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,7 +42,7 @@ const AuthPage = () => {
 
     try {
       const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/deye1inp8/image/upload",
+        "https://api.cloudinary.com/v1_1/dxfsoabsg/image/upload",
         data
       );
 
@@ -58,17 +65,8 @@ const AuthPage = () => {
     }
   };
 
-  const handleLoginSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.email || !formData.password) {
-      alert("Please enter both email and password.");
-      return;
-    }
-    console.log("Logging in with:", formData.email, formData.password);
-    // Add Firebase/Auth API logic here
-  };
-
-  const handleSignupSubmit = (e) => {
+  // SignUp
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     if (
       !formData.username ||
@@ -77,26 +75,92 @@ const AuthPage = () => {
       !formData.confirmPassword ||
       !formData.channelName
     ) {
-      alert("Please fill in all fields.");
+      toast.error("Please fill in all required fields.");
       return;
     }
     if (formData.password.length < 6) {
-      alert("Password must be at least 6 characters long.");
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
-    console.log(
-      "Signing up with:",
-      formData.username,
-      formData.email,
-      formData.password,
-      formData.channelName,
-      formData.profileImage
-    );
-    // Add Firebase/Auth API logic here
+
+    const cleanFormData = {
+      userName: formData.username,
+      email: formData.email,
+      password: formData.password,
+      profilePic: formData.profileImage,
+      channelName: formData.channelName,
+      about: formData.about,
+    };
+
+    try {
+      const res = await axios.post(
+        "http://localhost:4000/auth/signUp",
+        cleanFormData
+      );
+      console.log(res);
+      toast.success("Signup successful!");
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        profileImage: null,
+        channelName: "",
+        about: "",
+      });
+      // Navigate after 3 seconds
+      setTimeout(() => {
+        setIsLogin(true);
+      }, 2000);
+    } catch (err) {
+      console.log(err);
+      toast.error("Signup failed. Please try again.");
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+
+    if ((!formData.username && !formData.email) || !formData.password) {
+      toast.error("Please provide either username or email and your password.");
+      return;
+    }
+
+    const cleanFormData = {
+      userName: formData.username,
+      email: formData.email,
+      password: formData.password,
+    };
+
+    try {
+      const res = await axios.post(
+        "http://localhost:4000/auth/login",
+        cleanFormData
+      );
+      console.log(res);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.user._id);
+      localStorage.setItem("userProfilePic", res.data.user.profilePic);
+      toast.success("Login successful!");
+
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+      });
+
+      // Navigate after 3 seconds
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (err) {
+      console.log(err);
+      toast.error("Login failed. Please check your credentials.");
+    }
   };
 
   return (
@@ -115,19 +179,19 @@ const AuthPage = () => {
           className="space-y-3"
         >
           <div>
-            <label htmlFor="email" className="block text-sm text-[#aaa]">
-              Email or phone
+            <label htmlFor="userName" className="block text-sm text-[#aaa]">
+              Username or Email
             </label>
             <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
-              <Mail className="text-[#bbb] ml-2" />
+              <User className="text-[#bbb] ml-2" />
               <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+                type="text"
+                id="userName"
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
                 className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
-                placeholder="Enter your email"
+                placeholder="Enter your username or email"
               />
             </div>
           </div>
@@ -136,17 +200,23 @@ const AuthPage = () => {
             <label htmlFor="password" className="block text-sm text-[#aaa]">
               Password
             </label>
-            <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+            <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
               <Lock className="text-[#bbb] ml-2" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
                 placeholder="Enter your password"
               />
+              <div
+                className="absolute right-2 cursor-pointer text-[#bbb]"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </div>
             </div>
           </div>
 
@@ -159,17 +229,27 @@ const AuthPage = () => {
                 >
                   Confirm Password
                 </label>
-                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
                   <Lock className="text-[#bbb] ml-2" />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
                     placeholder="Confirm your password"
                   />
+                  <div
+                    className="absolute right-2 cursor-pointer text-[#bbb]"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </div>
                 </div>
               </div>
               {/* Username Section */}
@@ -209,6 +289,25 @@ const AuthPage = () => {
                     onChange={handleChange}
                     className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
                     placeholder="Enter your channel name"
+                  />
+                </div>
+              </div>
+
+              {/* Channel About */}
+              <div>
+                <label htmlFor="about" className="block text-sm text-[#aaa]">
+                  About Your Channel
+                </label>
+                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                  <User className="text-[#bbb] ml-2" />
+                  <input
+                    type="text"
+                    id="about"
+                    name="about"
+                    value={formData.about}
+                    onChange={handleChange}
+                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                    placeholder="Write something about your channel"
                   />
                 </div>
               </div>
@@ -278,6 +377,19 @@ const AuthPage = () => {
           </button>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        style={{ zIndex: 9999 }}
+      />
     </div>
   );
 };

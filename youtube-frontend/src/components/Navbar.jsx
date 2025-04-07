@@ -21,6 +21,7 @@ export default function Navbar({ setMobileMenuOpen }) {
   const [showNotificationTooltip, setShowNotificationTooltip] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userPic, setUserPic] = useState("");
   const profileRef = useRef(null);
   const createRef = useRef(null);
   const navigate = useNavigate();
@@ -44,6 +45,14 @@ export default function Navbar({ setMobileMenuOpen }) {
     setShowProfileDropdown(false);
     navigate(path);
   };
+
+  useEffect(() => {
+    let userProfilePic = localStorage.getItem("userProfilePic");
+    setIsLoggedIn(localStorage.getItem("userId") !== null ? true : false);
+    if (userProfilePic !== null) {
+      setUserPic(userProfilePic);
+    }
+  }, []);
 
   return (
     <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-[#0f0f0f] sticky top-0 z-[999]">
@@ -157,9 +166,12 @@ export default function Navbar({ setMobileMenuOpen }) {
         <div ref={profileRef} className="relative">
           <button onClick={() => setShowProfileDropdown(!showProfileDropdown)}>
             <img
-              src="https://img.freepik.com/premium-photo/color-user-icon-white-background_961147-8.jpg?semt=ais_hybrid"
+              src={
+                userPic ||
+                "https://cdn-icons-png.flaticon.com/512/3177/3177440.png"
+              } // default icon
               alt="Profile"
-              className="w-8 h-8 rounded-full cursor-pointer object-cover"
+              className="w-8 h-8 rounded-full cursor-pointer object-cover bg-white"
             />
           </button>
           {showProfileDropdown && (
@@ -168,7 +180,11 @@ export default function Navbar({ setMobileMenuOpen }) {
                 <>
                   <button
                     className="flex items-center px-4 py-2 w-full text-left hover:bg-[#444]"
-                    onClick={() => handleDropdownClick("/user/7878")}
+                    onClick={() =>
+                      handleDropdownClick(
+                        `/user/${localStorage.getItem("userId")}`
+                      )
+                    }
                   >
                     <User className="w-4 h-4 mr-2" />
                     Your Channel
@@ -184,8 +200,16 @@ export default function Navbar({ setMobileMenuOpen }) {
                   <button
                     className="flex items-center w-full text-left px-4 py-2 hover:bg-[#444]"
                     onClick={() => {
+                      // Clear user data from localStorage
+                      localStorage.removeItem("userId");
+                      localStorage.removeItem("userProfilePic");
+
+                      // Update local state
                       setIsLoggedIn(false);
+                      setUserPic("");
                       setShowProfileDropdown(false);
+
+                      // Redirect to home/login page
                       navigate("/");
                     }}
                   >

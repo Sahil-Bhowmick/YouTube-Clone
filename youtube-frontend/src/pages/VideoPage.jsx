@@ -12,10 +12,12 @@ import {
   MessageSquare,
   PlayCircle,
   User,
-  CheckCircle,
   SortAsc,
 } from "lucide-react";
+import { FaCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 
 const commentsData = [
   { id: 1, user: "John Doe", text: "Awesome video!" },
@@ -36,11 +38,76 @@ const VideoPage = () => {
   const [replies, setReplies] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
   const dropdownRef = useRef(null);
+  const [data, setData] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [videoUrl, setVideoUrl] = useState("");
+  const { id } = useParams();
 
-  const [user, setUser] = useState({
-    isLoggedIn: false,
-    photoURL: "https://randomuser.me/api/portraits/men/75.jpg", // Replace with dynamic image
-  });
+  // Fetching Video Data
+
+  useEffect(() => {
+    const fetchVideoById = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:4000/api/getVideoById/${id}`
+        );
+        setData(res?.data?.video);
+        setVideoUrl(res?.data?.video?.videoLink || "");
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const getCommentByVideoId = async () => {
+      try {
+        const res = await axios.get(`http://localhost:4000/api/comment/${id}`);
+        setComments(res?.data?.comments || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchVideoById();
+    getCommentByVideoId();
+  }, [id]);
+
+  const isYouTubeLink = (url) => {
+    return url.includes("youtube.com") || url.includes("youtu.be");
+  };
+
+  const getYouTubeVideoId = (url) => {
+    try {
+      const urlObj = new URL(url || "");
+      return urlObj.searchParams.get("v");
+    } catch (err) {
+      return null;
+    }
+  };
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    const intervals = [
+      { label: "year", seconds: 31536000 },
+      { label: "month", seconds: 2592000 },
+      { label: "week", seconds: 604800 },
+      { label: "day", seconds: 86400 },
+      { label: "hour", seconds: 3600 },
+      { label: "minute", seconds: 60 },
+      { label: "second", seconds: 1 },
+    ];
+
+    for (let i = 0; i < intervals.length; i++) {
+      const interval = intervals[i];
+      const count = Math.floor(seconds / interval.seconds);
+      if (count >= 1) {
+        return `${count} ${interval.label}${count > 1 ? "s" : ""} ago`;
+      }
+    }
+
+    return "Just now";
+  };
 
   // handle outside click
   useEffect(() => {
@@ -87,28 +154,50 @@ const VideoPage = () => {
     }));
   };
 
-  const visibleComments = showAllComments
-    ? commentsData
-    : commentsData.slice(0, 3);
+  const formatNumber = (num) => {
+    if (num >= 1_000_000) {
+      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    }
+    if (num >= 1_000) {
+      return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num?.toString();
+  };
 
   return (
     <div className="flex flex-col lg:flex-row w-full min-h-screen bg-[#0f0f0f] text-white overflow-hidden">
       {/* ---------- Left Section (Video + Comments) ---------- */}
       <div className="w-full lg:w-[70%] flex flex-col px-4 py-4 space-y-4">
         {/* Video */}
-        <div className="w-full aspect-video bg-black rounded-xl overflow-hidden">
-          <iframe
-            className="w-full h-full"
-            src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-            title="YouTube Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
-        </div>
+        {videoUrl ? (
+          isYouTubeLink(videoUrl) ? (
+            <iframe
+              className="w-full h-[500px] rounded-xl"
+              src={`https://www.youtube.com/embed/${getYouTubeVideoId(
+                videoUrl
+              )}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              src={videoUrl}
+              className="w-full h-[500px] rounded-xl bg-black"
+              controls
+              autoPlay
+            />
+          )
+        ) : (
+          <div className="w-full h-[500px] flex items-center justify-center text-gray-400">
+            Loading video...
+          </div>
+        )}
 
         {/* Title */}
         <h1 className="text-lg sm:text-xl md:text-2xl font-semibold leading-tight">
-          Sample YouTube Clone Video - Fully Responsive
+          {data?.title}
         </h1>
 
         {/* Channel Info + Actions */}
@@ -116,27 +205,44 @@ const VideoPage = () => {
           {/* Channel Info */}
           <div className="flex items-center gap-3">
             <Link
-              to={"/user/7878"}
+              to={`/user/${data?.user?._id}`}
               className="w-12 h-12 cursor-pointer rounded-full bg-gray-700 flex items-center justify-center overflow-hidden"
             >
-              {user.isLoggedIn && user.photoURL ? (
+              {data?.user?.profilePic ? (
                 <img
-                  src={user.photoURL}
+                  src={data.user.profilePic}
                   alt="User Profile"
                   className="w-full h-full object-cover rounded-full"
                 />
               ) : (
-                <User className="text-white w-6 h-6" />
+                <div className="w-full h-full flex items-center justify-center bg-gray-700 rounded-full">
+                  <User className="text-white w-6 h-6" />
+                </div>
               )}
             </Link>
             <div>
-              <div className="flex items-center gap-1">
-                <h3 className="font-semibold text-sm cursor-pointer">
-                  Channel Name
-                </h3>
-                <CheckCircle className="text-blue-500 w-4 h-4 cursor-pointer" />
+              <div className="flex items-center gap-2 relative group">
+                <Link to={`/user/${data?.user?._id}`}>
+                  <h3 className="font-semibold text-sm cursor-pointer">
+                    {data?.user?.channelName}
+                  </h3>
+                </Link>
+
+                {data?.user?.isVerified && (
+                  <div className="relative flex items-center group ml-1">
+                    <FaCheckCircle className="text-blue-500 w-4 h-4 cursor-pointer" />
+
+                    {/* Tooltip */}
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      Verified
+                    </span>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-400">2.3M subscribers</p>
+
+              <p className="text-xs text-gray-400">
+                {formatNumber(data?.user?.subscribers)} subscribers
+              </p>
             </div>
             <button
               type="button"
@@ -153,9 +259,10 @@ const VideoPage = () => {
               type="button"
               className="flex items-center gap-2 cursor-pointer bg-[#272727] hover:bg-[#3c3c3c] px-4 py-2 rounded-full transition"
             >
-              <ThumbsUp size={18} /> 3.4K
+              <ThumbsUp size={18} /> {data?.like}
               <div className="w-[1px] h-5 bg-gray-600 mx-2" />
               <ThumbsDown size={18} />
+              {data?.dislike}
             </button>
 
             {/* Share */}
@@ -220,24 +327,34 @@ const VideoPage = () => {
 
         {/* Expandable Description */}
         <div className="bg-[#1c1c1c] p-3 rounded-lg text-sm text-gray-300 space-y-1 leading-relaxed">
+          {/* Views and Created At */}
+          <div className="text-gray-400 text-xs mb-1">
+            {formatNumber(data?.views)} views • {getTimeAgo(data?.createdAt)}
+          </div>
+
+          {/* Description */}
           <p>
             {showFullDescription
-              ? "This is a sample description with more info, timestamps, links, hashtags, and all the details you usually see on YouTube. Lorem ipsum dolor sit amet consectetur adipisicing elit. Nulla officiis molestias unde illum."
-              : "This is a sample description with more info, timestamps, links..."}
+              ? data?.description
+              : `${data?.description?.slice(0, 60)}...`}
           </p>
-          <button
-            onClick={() => setShowFullDescription(!showFullDescription)}
-            className="text-blue-400 text-xs hover:underline"
-            type="button"
-          >
-            {showFullDescription ? "Show less" : "Show more"}
-          </button>
+
+          {/* Toggle Button */}
+          {data?.description?.length > 60 && (
+            <button
+              onClick={() => setShowFullDescription(!showFullDescription)}
+              className="text-blue-400 text-xs hover:underline"
+              type="button"
+            >
+              {showFullDescription ? "Show less" : "Show more"}
+            </button>
+          )}
         </div>
 
         {/* Comments */}
         <div className="space-y-4">
           <h2 className="font-semibold text-lg flex items-center gap-2">
-            <MessageSquare size={20} /> {commentsData.length} Comments
+            <MessageSquare size={20} /> {comments.length} Comments
           </h2>
 
           {/* Sort By */}
@@ -301,22 +418,39 @@ const VideoPage = () => {
           </div>
 
           {/* Comments List */}
-          {visibleComments.map((comment) => (
+          {comments.map((comment, index) => (
             <div
-              key={comment.id}
+              key={comment?._id}
               className="flex gap-3 mt-4 hover:bg-[#1c1c1c] p-2 rounded-xl transition"
             >
-              <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center">
-                <User size={16} />
+              {/* Profile Picture or Fallback Icon */}
+              <div className="w-9 h-9 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
+                {comment?.user?.profilePic ? (
+                  <img
+                    src={comment.user.profilePic}
+                    alt="User avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={16} />
+                )}
               </div>
 
               <div className="flex-1 space-y-1">
+                {/* User Info and Date */}
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm">{comment.user}</p>
-                  <span className="text-xs text-gray-500">• 1 day ago</span>
+                  <p className="font-medium text-sm">
+                    {comment?.user?.channelName || comment?.user?.userName}
+                  </p>
+                  <span className="text-xs text-gray-500">
+                    • {getTimeAgo(comment.createdAt)}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-300">{comment.text}</p>
 
+                {/* Comment Message */}
+                <p className="text-sm text-gray-300">{comment?.message}</p>
+
+                {/* Buttons: Like, Dislike, Reply */}
                 <div className="flex items-center gap-4 text-gray-400 mt-1 text-sm">
                   <button
                     type="button"
@@ -331,27 +465,28 @@ const VideoPage = () => {
                     <ThumbsDown size={14} />
                   </button>
                   <button
-                    onClick={() => toggleReplyBox(comment.id)}
+                    onClick={() => toggleReplyBox(comment._id)}
                     type="button"
                     className="hover:underline"
                   >
-                    {replies[comment.id]?.show ? "Hide reply" : "Reply"}
+                    {replies[comment._id]?.show ? "Hide reply" : "Reply"}
                   </button>
                 </div>
 
-                {replies[comment.id]?.show && (
+                {/* Reply Input */}
+                {replies[comment._id]?.show && (
                   <div className="flex gap-2 mt-2">
                     <input
                       type="text"
-                      value={replies[comment.id]?.input || ""}
+                      value={replies[comment._id]?.input || ""}
                       onChange={(e) =>
-                        handleReplyChange(comment.id, e.target.value)
+                        handleReplyChange(comment._id, e.target.value)
                       }
                       placeholder="Reply..."
                       className="flex-1 bg-transparent border-b border-gray-600 focus:outline-none focus:border-white text-sm text-white placeholder-gray-400"
                     />
                     <button
-                      onClick={() => handleReplySubmit(comment.id)}
+                      onClick={() => handleReplySubmit(comment._id)}
                       type="button"
                       className="text-blue-400 text-xs hover:underline"
                     >
@@ -385,9 +520,17 @@ const VideoPage = () => {
               key={index}
               className="flex gap-2 cursor-pointer hover:bg-[#1c1c1c] p-2 rounded-lg transition"
             >
-              <div className="w-32 h-20 bg-gray-600 flex items-center justify-center rounded-lg">
-                <PlayCircle size={24} />
+              <div className="relative w-32 h-20 rounded-lg overflow-hidden group shadow-md">
+                <img
+                  src="https://img.freepik.com/free-vector/flat-spring-youtube-channel-art_23-2149268975.jpg?ga=GA1.1.957652596.1743933187&semt=ais_hybrid&w=740"
+                  alt={`Thumbnail ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <PlayCircle size={32} className="text-white" />
+                </div>
               </div>
+
               <div className="flex flex-col justify-between">
                 <h3 className="text-sm font-semibold leading-snug">
                   Recommended Video {index + 1}
@@ -395,7 +538,7 @@ const VideoPage = () => {
                 <p className="text-xs text-gray-400 flex items-center gap-1">
                   Channel Name
                   <span className="relative group">
-                    <CheckCircle size={12} className="text-blue-500" />
+                    <FaCheckCircle size={12} className="text-blue-500" />
 
                     {/* Tooltip positioned on top of icon */}
                     <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0.5 bg-[#272727] text-white text-[10px] px-2 py-[2px] rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-50">

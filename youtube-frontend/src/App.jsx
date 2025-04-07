@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./App.css";
+import axios from "axios";
 
 // Lazy load pages for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -37,6 +38,18 @@ export default function App() {
       contentRef.current.scrollTop = 0; // Reset scroll position for the scrollable div
     }
   }, [location.pathname]); // Runs whenever the route changes
+
+  // Backend Intregation Testing
+  // useEffect(() => {
+  //   axios
+  //     .get("http://localhost:4000/api/allVideo")
+  //     .then((res) => {
+  //       console.log(res);
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // }, []);
 
   return (
     <div className="flex h-screen bg-[#0f0f0f] text-white relative">

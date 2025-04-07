@@ -19,9 +19,9 @@ const VideoUpload = ({ onClose }) => {
 
   const cloudinaryPreset = "youtube-clone";
   const cloudinaryVideoUrl =
-    "https://api.cloudinary.com/v1_1/deye1inp8/video/upload";
+    "https://api.cloudinary.com/v1_1/dxfsoabsg/video/upload";
   const cloudinaryImageUrl =
-    "https://api.cloudinary.com/v1_1/deye1inp8/image/upload";
+    "https://api.cloudinary.com/v1_1/dxfsoabsg/image/upload";
 
   // Video Upload Dropzone
   const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps } =
@@ -289,16 +289,6 @@ const VideoUpload = ({ onClose }) => {
             Go Home
           </button>
         </div>
-
-        {/* Progress Bar */}
-        {/* {uploading && (
-          <div className="mt-4 w-full bg-gray-700 h-2 rounded">
-            <div
-              className="h-2 bg-red-500 rounded transition-all"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        )} */}
         {/* Progress Bar */}
         {uploading && (
           <div className="mt-4">

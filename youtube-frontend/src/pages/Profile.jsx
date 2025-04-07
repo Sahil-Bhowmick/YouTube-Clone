@@ -10,12 +10,33 @@ import {
   PlaySquare,
   MessageCircle,
 } from "lucide-react";
+import axios from "axios";
+import { Link, useParams } from "react-router-dom";
 
 const Profile = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [bellActive, setBellActive] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
+  const [data, setData] = useState([]);
+  const [user, setUser] = useState(null);
   const bellRef = useRef(null);
+  const { id } = useParams();
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      axios
+        .get(`http://localhost:4000/api/${id}/channel`)
+        .then((res) => {
+          setData(res.data.video);
+          setUser(res.data.video[0]?.user);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    };
+
+    fetchProfileData();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,16 +50,41 @@ const Profile = () => {
     };
   }, []);
 
-  const dummyVideos = [
-    {
-      title: "React Tutorial for Beginners",
-      views: "1.5M",
-      time: "2 days ago",
-    },
-    { title: "Advanced CSS Tricks", views: "900K", time: "1 week ago" },
-    { title: "JavaScript ES6 Features", views: "700K", time: "3 weeks ago" },
-    { title: "Tailwind CSS Crash Course", views: "1.2M", time: "1 month ago" },
-  ];
+  const formatNumber = (num) => {
+    if (num >= 1_000_000) {
+      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    }
+    if (num >= 1_000) {
+      return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num?.toString();
+  };
+
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    const intervals = [
+      { label: "year", seconds: 31536000 },
+      { label: "month", seconds: 2592000 },
+      { label: "week", seconds: 604800 },
+      { label: "day", seconds: 86400 },
+      { label: "hour", seconds: 3600 },
+      { label: "minute", seconds: 60 },
+      { label: "second", seconds: 1 },
+    ];
+
+    for (let i = 0; i < intervals.length; i++) {
+      const interval = intervals[i];
+      const count = Math.floor(seconds / interval.seconds);
+      if (count >= 1) {
+        return `${count} ${interval.label}${count > 1 ? "s" : ""} ago`;
+      }
+    }
+
+    return "Just now";
+  };
 
   return (
     <div className="max-w-[1200px] mx-auto text-white bg-[#0F0F0F] p-4">
@@ -49,15 +95,33 @@ const Profile = () => {
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
           {/* Profile Image */}
-          <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gray-400 flex items-center justify-center -mt-10 sm:-mt-14 border-4 border-[#0F0F0F]">
-            <User size={40} className="text-white" />
+          <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gray-400 flex items-center justify-center -mt-10 sm:-mt-14 border-4 border-[#0F0F0F] overflow-hidden">
+            {user?.profilePic ? (
+              <img
+                src={user.profilePic}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User size={40} className="text-white" />
+            )}
           </div>
 
           {/* Channel Details */}
           <div className="text-center sm:text-left">
-            <h2 className="text-xl sm:text-2xl font-bold">Channel Name</h2>
-            <p className="text-[#AAAAAA] text-sm">
-              @channel_handle • 1.2M subscribers • 100 videos
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              {user?.channelName}
+            </h2>
+
+            {/* Meta Info */}
+            <p className="text-gray-400 text-sm mt-1">
+              {user?.userName} • {formatNumber(user?.subscribers)} subscribers •{" "}
+              {formatNumber(data.length)} videos
+            </p>
+
+            {/* About Section */}
+            <p className="text-gray-300 text-sm mt-1">
+              {user?.about ? user.about : "No about info available!"}
             </p>
           </div>
         </div>
@@ -133,14 +197,24 @@ const Profile = () => {
       {/* Video Section */}
       {activeTab === "videos" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 cursor-pointer">
-          {dummyVideos.map((video, index) => (
-            <div key={index} className="bg-[#181818] rounded-lg p-3">
-              <div className="w-full h-36 bg-gray-600 rounded-lg"></div>
-              <h3 className="text-sm font-semibold mt-2">{video.title}</h3>
-              <p className="text-xs text-[#AAAAAA]">
-                {video.views} views • {video.time}
+          {data.map((video, index) => (
+            <Link
+              to={`/watch/${video._id}`}
+              key={index}
+              className="block bg-[#181818] rounded-lg p-3 hover:bg-[#202020] transition"
+            >
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="w-full h-36 object-cover rounded-lg"
+              />
+              <h3 className="text-sm font-semibold mt-2 text-gray-100 hover:underline">
+                {video.title}
+              </h3>
+              <p className="text-xs text-gray-400">
+                {video.views} views • {getTimeAgo(video.createdAt)}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       )}
