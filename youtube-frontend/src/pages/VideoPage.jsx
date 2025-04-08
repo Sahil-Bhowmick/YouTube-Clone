@@ -92,7 +92,11 @@ const VideoPage = () => {
         setComment("");
       })
       .catch((err) => {
-        toast.error("Please Login to Add Comment.");
+        if (err.response?.status === 401) {
+          toast.error("Please log in to add comments.");
+        } else {
+          toast.error("Something went wrong. Please try again.");
+        }
         console.log(err);
       });
   };
@@ -602,10 +606,10 @@ const VideoPage = () => {
                       >
                         {/* Avatar */}
                         <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center shrink-0">
-                          {reply.user?.profilePic ? (
+                          {localStorage.getItem("userProfilePic") ? (
                             <img
-                              src={reply.user.profilePic}
-                              alt="User avatar"
+                              src={localStorage.getItem("userProfilePic")}
+                              alt="Reply avatar"
                               className="w-full h-full object-cover"
                             />
                           ) : (

@@ -1,10 +1,10 @@
 import React from "react";
 import HomePage from "../components/HomePage";
 
-const Home = () => {
+const Home = ({ searchQuery }) => {
   return (
     <div>
-      <HomePage />
+      <HomePage searchQuery={searchQuery} />
     </div>
   );
 };

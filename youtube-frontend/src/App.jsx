@@ -23,6 +23,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const location = useLocation();
   const contentRef = useRef(null);
@@ -70,6 +71,7 @@ export default function App() {
         <Navbar
           className="sticky top-0 z-50"
           setMobileMenuOpen={setMobileMenuOpen}
+          onSearch={setSearchQuery}
         />
 
         <ErrorBoundary>
@@ -81,7 +83,7 @@ export default function App() {
               className="flex-1 overflow-y-auto bg-[#0f0f0f]"
             >
               <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Home searchQuery={searchQuery} />} />
                 <Route path="/watch/:id" element={<VideoPage />} />
                 <Route path="/user/:id" element={<Profile />} />
                 <Route path="/:id/upload" element={<VideoUpload />} />

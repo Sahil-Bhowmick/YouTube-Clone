@@ -4,7 +4,7 @@ import { FaCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-export default function HomePage() {
+export default function HomePage({ searchQuery }) {
   const [data, setData] = useState([]);
   const [chunkSize, setChunkSize] = useState(10);
   const [page, setPage] = useState(0);
@@ -120,13 +120,27 @@ export default function HomePage() {
     return num?.toString();
   };
 
-  const filteredVideos =
-    selectedCategory === "All"
-      ? data
-      : data.filter(
-          (video) =>
-            video?.videoType?.toLowerCase() === selectedCategory.toLowerCase()
-        );
+  // const filteredVideos =
+  //   selectedCategory === "All"
+  //     ? data
+  //     : data.filter(
+  //         (video) =>
+  //           video?.videoType?.toLowerCase() === selectedCategory.toLowerCase()
+  //       );
+  const filteredVideos = data.filter((video) => {
+    const matchesCategory =
+      selectedCategory === "All" ||
+      video?.videoType?.toLowerCase() === selectedCategory.toLowerCase();
+
+    const matchesSearch =
+      !searchQuery ||
+      video?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video?.user?.channelName
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#0f0f0f] text-white">
