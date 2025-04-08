@@ -105,3 +105,76 @@ export const addReplyToComment = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// Edit Comment
+export const editCommentOrReply = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { replyId, message } = req.body;
+
+    if (!message || !commentId) {
+      return res
+        .status(400)
+        .json({ error: "Message and Comment ID are required." });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ error: "Invalid comment ID." });
+    }
+
+    const sanitizedMessage = sanitizeHtml(message);
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found." });
+    }
+
+    // Check if it's a reply edit
+    if (replyId) {
+      if (!mongoose.Types.ObjectId.isValid(replyId)) {
+        return res.status(400).json({ error: "Invalid reply ID." });
+      }
+
+      const reply = comment.replies.id(replyId);
+      if (!reply) {
+        return res.status(404).json({ error: "Reply not found." });
+      }
+
+      if (reply.user.toString() !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: "Unauthorized to edit this reply." });
+      }
+
+      reply.message = sanitizedMessage;
+      reply.editedAt = new Date();
+
+      await comment.save();
+
+      return res.status(200).json({
+        message: "Reply updated successfully",
+        updatedReply: reply,
+      });
+    }
+
+    // Else it's a comment edit
+    if (comment.user.toString() !== req.userId) {
+      return res
+        .status(403)
+        .json({ error: "Unauthorized to edit this comment." });
+    }
+
+    comment.message = sanitizedMessage;
+    comment.editedAt = new Date();
+
+    await comment.save();
+
+    return res.status(200).json({
+      message: "Comment updated successfully",
+      updatedComment: comment,
+    });
+  } catch (error) {
+    console.error("Error editing comment or reply:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};

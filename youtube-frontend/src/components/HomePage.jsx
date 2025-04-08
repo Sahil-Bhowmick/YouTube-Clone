@@ -20,6 +20,7 @@ export default function HomePage({ searchQuery }) {
     "Education",
     "News",
     "Sports",
+    "Coding",
     "Movies",
     "Fashion",
     "Learning",
@@ -55,8 +56,8 @@ export default function HomePage({ searchQuery }) {
     const handleResize = () => {
       const width = window.innerWidth;
       if (width >= 1600) setChunkSize(16);
-      else if (width >= 1280) setChunkSize(14);
-      else if (width >= 1024) setChunkSize(10);
+      else if (width >= 1280) setChunkSize(15);
+      else if (width >= 1024) setChunkSize(13);
       else if (width >= 840) setChunkSize(6);
       else if (width >= 600) setChunkSize(6);
       else setChunkSize(3);
@@ -120,13 +121,6 @@ export default function HomePage({ searchQuery }) {
     return num?.toString();
   };
 
-  // const filteredVideos =
-  //   selectedCategory === "All"
-  //     ? data
-  //     : data.filter(
-  //         (video) =>
-  //           video?.videoType?.toLowerCase() === selectedCategory.toLowerCase()
-  //       );
   const filteredVideos = data.filter((video) => {
     const matchesCategory =
       selectedCategory === "All" ||

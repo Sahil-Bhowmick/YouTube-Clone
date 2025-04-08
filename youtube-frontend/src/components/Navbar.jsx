@@ -32,7 +32,7 @@ export default function Navbar({ setMobileMenuOpen, onSearch }) {
 
   const handleInputChange = (e) => {
     setSearch(e.target.value);
-    onSearch(e.target.value); // Send search query to parent
+    onSearch(e.target.value);
   };
 
   useEffect(() => {

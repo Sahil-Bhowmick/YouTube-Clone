@@ -39,7 +39,6 @@ const VideoPage = () => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [replies, setReplies] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [visibleReplies, setVisibleReplies] = useState({});
   const dropdownRef = useRef(null);
   const [data, setData] = useState(null);
   const [comments, setComments] = useState([]);
