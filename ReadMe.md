@@ -6,7 +6,7 @@ A full-stack web application that emulates key features of YouTube, including vi
 
 ## 🚀 Live Demo
 
-Coming Soon...
+https://res.cloudinary.com/dxfsoabsg/video/upload/v1744123638/w2bjlzmd44y8trayityo.mp4
 
 ---
 
