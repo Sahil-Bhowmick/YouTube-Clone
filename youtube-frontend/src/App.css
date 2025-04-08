@@ -13,3 +13,14 @@
 .custom-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */
 }
+
+/* nprogress-custom.css */
+#nprogress .bar {
+  background: #ff0000 !important; /* Force YouTube red */
+  height: 2px !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #ff0000, 0 0 5px #ff0000 !important;
+}
+

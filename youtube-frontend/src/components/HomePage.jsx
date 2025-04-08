@@ -246,10 +246,15 @@ export default function HomePage() {
       </div>
 
       {/* Loader Observer */}
-      <div ref={loaderRef} className="h-20 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-8 h-8 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
-          <span className="text-sm text-gray-400 animate-pulse">
+      <div ref={loaderRef} className="h-28 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          {/* Gradient spinning ring */}
+          <div className="w-12 h-12 rounded-full border-[3px] border-t-transparent animate-spin bg-gradient-to-tr from-[#ff0000] to-[#cc0000] p-1">
+            <div className="w-full h-full bg-[#0f0f0f] rounded-full"></div>
+          </div>
+
+          {/* Glowing pulse text */}
+          <span className="text-sm text-gray-300 animate-pulse tracking-wide font-medium">
             Loading more videos...
           </span>
         </div>

@@ -15,8 +15,11 @@ import {
 } from "lucide-react";
 import YouTubeImg from "../assets/youtube.png";
 import { Link, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
-export default function Navbar({ setMobileMenuOpen }) {
+export default function Navbar({ setMobileMenuOpen, onSearch }) {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationTooltip, setShowNotificationTooltip] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
@@ -25,6 +28,12 @@ export default function Navbar({ setMobileMenuOpen }) {
   const profileRef = useRef(null);
   const createRef = useRef(null);
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+
+  const handleInputChange = (e) => {
+    setSearch(e.target.value);
+    onSearch(e.target.value); // Send search query to parent
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -54,6 +63,33 @@ export default function Navbar({ setMobileMenuOpen }) {
     }
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      // Clear user data
+      localStorage.clear();
+
+      // Logout from backend
+      await axios.post(
+        "http://localhost:4000/auth/logout",
+        {},
+        { withCredentials: true }
+      );
+
+      console.log("Logout Successful!");
+
+      // Show toast
+      toast.success("Logout successful!");
+
+      // Navigate after a short delay (optional)
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (err) {
+      console.log(err);
+      toast.error("Logout failed. Please try again.");
+    }
+  };
+
   return (
     <header className="flex items-center justify-between px-4 md:px-8 py-3 bg-[#0f0f0f] sticky top-0 z-[999]">
       {/* Left */}
@@ -77,6 +113,8 @@ export default function Navbar({ setMobileMenuOpen }) {
         <div className="flex bg-[#121212] border border-[#303030] rounded-full overflow-hidden w-full focus-within:border-[#3ea6ff] transition-colors duration-300">
           <input
             type="text"
+            value={search}
+            onChange={handleInputChange}
             placeholder="Search"
             className="px-4 py-2 w-full bg-[#121212] text-sm outline-none text-white placeholder:text-[#aaa]"
           />
@@ -169,7 +207,7 @@ export default function Navbar({ setMobileMenuOpen }) {
               src={
                 userPic ||
                 "https://cdn-icons-png.flaticon.com/512/3177/3177440.png"
-              } // default icon
+              }
               alt="Profile"
               className="w-8 h-8 rounded-full cursor-pointer object-cover bg-white"
             />
@@ -199,22 +237,10 @@ export default function Navbar({ setMobileMenuOpen }) {
                   <hr className="border-[#444]" />
                   <button
                     className="flex items-center w-full text-left px-4 py-2 hover:bg-[#444]"
-                    onClick={() => {
-                      // Clear user data from localStorage
-                      localStorage.removeItem("userId");
-                      localStorage.removeItem("userProfilePic");
-
-                      // Update local state
-                      setIsLoggedIn(false);
-                      setUserPic("");
-                      setShowProfileDropdown(false);
-
-                      // Redirect to home/login page
-                      navigate("/");
-                    }}
+                    onClick={handleLogout}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                    Log Out
                   </button>
                 </>
               ) : (
@@ -232,6 +258,19 @@ export default function Navbar({ setMobileMenuOpen }) {
             </div>
           )}
         </div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          style={{ zIndex: 9999 }}
+        />
       </div>
     </header>
   );

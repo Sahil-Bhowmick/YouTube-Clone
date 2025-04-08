@@ -228,6 +228,7 @@ export default function Sidebar({
                           icon={item.icon}
                           label={item.label}
                           sidebarOpen={true}
+                          route={item.route}
                           active={activeItem === item.id}
                           onClick={() => {
                             setActiveItem(item.id);

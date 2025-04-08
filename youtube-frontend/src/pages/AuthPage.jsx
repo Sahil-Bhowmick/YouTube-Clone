@@ -8,8 +8,8 @@ import { useNavigate } from "react-router-dom";
 const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
+  const [isLogin, setIsLogin] = useState(false);
+  const [signUpData, setSignUpData] = useState({
     username: "",
     email: "",
     password: "",
@@ -18,12 +18,23 @@ const AuthPage = () => {
     channelName: "",
     about: "",
   });
+  const [loginData, setLoginData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
 
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
+  const handleSignUpChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
+    setSignUpData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
@@ -49,7 +60,7 @@ const AuthPage = () => {
       const imageUrl = response.data.secure_url;
 
       if (imageUrl) {
-        setFormData((prevState) => ({
+        setSignUpData((prevState) => ({
           ...prevState,
           profileImage: imageUrl,
         }));
@@ -69,31 +80,31 @@ const AuthPage = () => {
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
     if (
-      !formData.username ||
-      !formData.email ||
-      !formData.password ||
-      !formData.confirmPassword ||
-      !formData.channelName
+      !signUpData.username ||
+      !signUpData.email ||
+      !signUpData.password ||
+      !signUpData.confirmPassword ||
+      !signUpData.channelName
     ) {
       toast.error("Please fill in all required fields.");
       return;
     }
-    if (formData.password.length < 6) {
+    if (signUpData.password.length < 6) {
       toast.error("Password must be at least 6 characters long.");
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
+    if (signUpData.password !== signUpData.confirmPassword) {
       toast.error("Passwords do not match.");
       return;
     }
 
     const cleanFormData = {
-      userName: formData.username,
-      email: formData.email,
-      password: formData.password,
-      profilePic: formData.profileImage,
-      channelName: formData.channelName,
-      about: formData.about,
+      userName: signUpData.username,
+      email: signUpData.email,
+      password: signUpData.password,
+      profilePic: signUpData.profileImage,
+      channelName: signUpData.channelName,
+      about: signUpData.about,
     };
 
     try {
@@ -103,7 +114,7 @@ const AuthPage = () => {
       );
       console.log(res);
       toast.success("Signup successful!");
-      setFormData({
+      setSignUpData({
         username: "",
         email: "",
         password: "",
@@ -125,35 +136,35 @@ const AuthPage = () => {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
 
-    if ((!formData.username && !formData.email) || !formData.password) {
+    if ((!loginData.username && !loginData.email) || !loginData.password) {
       toast.error("Please provide either username or email and your password.");
       return;
     }
 
     const cleanFormData = {
-      userName: formData.username,
-      email: formData.email,
-      password: formData.password,
+      userName: loginData.username,
+      email: loginData.email,
+      password: loginData.password,
     };
 
     try {
       const res = await axios.post(
         "http://localhost:4000/auth/login",
-        cleanFormData
+        cleanFormData,
+        { withCredentials: true }
       );
-      console.log(res);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userId", res.data.user._id);
       localStorage.setItem("userProfilePic", res.data.user.profilePic);
       toast.success("Login successful!");
 
-      setFormData({
+      setLoginData({
         username: "",
         email: "",
         password: "",
       });
 
-      // Navigate after 3 seconds
+      // Navigate after 2 seconds
       setTimeout(() => {
         window.location.href = "/";
       }, 2000);
@@ -171,209 +182,263 @@ const AuthPage = () => {
         </div>
 
         <h2 className="text-xl sm:text-2xl font-bold text-center text-[#f1f1f1] mb-3">
-          {isLogin ? "Sign In" : "Sign Up"}
+          {isLogin ? "Sign Up" : "Sign In"}
         </h2>
 
-        <form
-          onSubmit={isLogin ? handleLoginSubmit : handleSignupSubmit}
-          className="space-y-3"
-        >
-          <div>
-            <label htmlFor="userName" className="block text-sm text-[#aaa]">
-              Username or Email
-            </label>
-            <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
-              <User className="text-[#bbb] ml-2" />
-              <input
-                type="text"
-                id="userName"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
-                placeholder="Enter your username or email"
-              />
+        {isLogin ? (
+          // 📝 Sign Up Form
+          <form onSubmit={handleSignupSubmit} className="space-y-3">
+            {/* Username */}
+            <div>
+              <label htmlFor="username" className="block text-sm text-[#aaa]">
+                Username
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <User className="text-[#bbb] ml-2" />
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={signUpData.username}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                  placeholder="Enter your username"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm text-[#aaa]">
-              Password
-            </label>
-            <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
-              <Lock className="text-[#bbb] ml-2" />
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
-                placeholder="Enter your password"
-              />
-              <div
-                className="absolute right-2 cursor-pointer text-[#bbb]"
-                onClick={() => setShowPassword((prev) => !prev)}
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm text-[#aaa]">
+                Email
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <User className="text-[#bbb] ml-2" />
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={signUpData.email}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                  placeholder="Enter your email"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm text-[#aaa]">
+                Password
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
+                <Lock className="text-[#bbb] ml-2" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={signUpData.password}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
+                  placeholder="Enter your password"
+                />
+                <div
+                  className="absolute right-2 cursor-pointer text-[#bbb]"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </div>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm text-[#aaa]"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                Confirm Password
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
+                <Lock className="text-[#bbb] ml-2" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={signUpData.confirmPassword}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
+                  placeholder="Confirm your password"
+                />
+                <div
+                  className="absolute right-2 cursor-pointer text-[#bbb]"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {!isLogin && (
-            <>
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm text-[#aaa]"
-                >
-                  Confirm Password
-                </label>
-                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
-                  <Lock className="text-[#bbb] ml-2" />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
-                    placeholder="Confirm your password"
-                  />
-                  <div
-                    className="absolute right-2 cursor-pointer text-[#bbb]"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </div>
-                </div>
+            {/* Channel Name */}
+            <div>
+              <label
+                htmlFor="channelName"
+                className="block text-sm text-[#aaa]"
+              >
+                Channel Name
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <User className="text-[#bbb] ml-2" />
+                <input
+                  type="text"
+                  id="channelName"
+                  name="channelName"
+                  value={signUpData.channelName}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                  placeholder="Enter your channel name"
+                />
               </div>
-              {/* Username Section */}
-              <div>
-                <label htmlFor="username" className="block text-sm text-[#aaa]">
-                  Username
-                </label>
-                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
-                  <User className="text-[#bbb] ml-2" />
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
-                    placeholder="Enter your username"
-                  />
-                </div>
-              </div>
+            </div>
 
-              {/* Channel Name Section */}
-              <div>
-                <label
-                  htmlFor="channelName"
-                  className="block text-sm text-[#aaa]"
-                >
-                  Channel Name
-                </label>
-                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
-                  <User className="text-[#bbb] ml-2" />
-                  <input
-                    type="text"
-                    id="channelName"
-                    name="channelName"
-                    value={formData.channelName}
-                    onChange={handleChange}
-                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
-                    placeholder="Enter your channel name"
-                  />
-                </div>
+            {/* About */}
+            <div>
+              <label htmlFor="about" className="block text-sm text-[#aaa]">
+                About Your Channel
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <User className="text-[#bbb] ml-2" />
+                <input
+                  type="text"
+                  id="about"
+                  name="about"
+                  value={signUpData.about}
+                  onChange={handleSignUpChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                  placeholder="Write something about your channel"
+                />
               </div>
+            </div>
 
-              {/* Channel About */}
-              <div>
-                <label htmlFor="about" className="block text-sm text-[#aaa]">
-                  About Your Channel
-                </label>
-                <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
-                  <User className="text-[#bbb] ml-2" />
-                  <input
-                    type="text"
-                    id="about"
-                    name="about"
-                    value={formData.about}
-                    onChange={handleChange}
-                    className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
-                    placeholder="Write something about your channel"
-                  />
-                </div>
-              </div>
-
-              {/* Profile Image Section */}
-              <div className="flex flex-col items-center mb-3">
-                <label className="block text-sm text-[#aaa] mb-1">
-                  Select Profile Image
-                </label>
-                <div className="relative group w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF0000]">
-                  {formData.profileImage ? (
-                    <>
-                      <img
-                        src={formData.profileImage}
-                        alt="Profile Preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <span className="text-white text-xs">Change Photo</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-[#333] flex items-center justify-center text-[#bbb] text-xs">
-                      No Image
+            {/* Profile Image */}
+            <div className="flex flex-col items-center mb-3">
+              <label className="block text-sm text-[#aaa] mb-1">
+                Select Profile Image
+              </label>
+              <div className="relative group w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF0000]">
+                {signUpData.profileImage ? (
+                  <>
+                    <img
+                      src={signUpData.profileImage}
+                      alt="Profile Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <span className="text-white text-xs">Change Photo</span>
                     </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileImageChange}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                </div>
-                {formData.profileImage && (
-                  <button
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, profileImage: null }))
-                    }
-                    className="mt-1 text-base text-[#FF0000] hover:text-[#cc0000] transition cursor-pointer"
-                  >
-                    Remove Image
-                  </button>
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-[#333] flex items-center justify-center text-[#bbb] text-xs">
+                    No Image
+                  </div>
                 )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
               </div>
-            </>
-          )}
+              {signUpData.profileImage && (
+                <button
+                  onClick={() =>
+                    setSignUpData((prev) => ({ ...prev, profileImage: null }))
+                  }
+                  className="mt-1 text-base text-[#FF0000] hover:text-[#cc0000] transition cursor-pointer"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
 
-          <div>
-            <button
-              type="submit"
-              className="w-full py-2 bg-[#FF0000] text-white rounded-md hover:bg-[#cc0000] transition-all text-sm font-medium"
-            >
-              {isLogin ? "Sign In" : "Sign Up"}
-            </button>
-          </div>
-        </form>
+            <div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#FF0000] text-white rounded-md hover:bg-[#cc0000] transition-all text-sm font-medium"
+              >
+                Sign Up
+              </button>
+            </div>
+          </form>
+        ) : (
+          // 🔐 Sign In Form
+          <form onSubmit={handleLoginSubmit} className="space-y-3">
+            <div>
+              <label htmlFor="userName" className="block text-sm text-[#aaa]">
+                Username or Email
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md">
+                <User className="text-[#bbb] ml-2" />
+                <input
+                  type="text"
+                  id="loginIdentifier"
+                  name="username"
+                  value={loginData.username}
+                  onChange={handleLoginChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 rounded-md text-sm"
+                  placeholder="Enter your username or email"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm text-[#aaa]">
+                Password
+              </label>
+              <div className="flex items-center border border-[#333] bg-[#202020] rounded-md relative">
+                <Lock className="text-[#bbb] ml-2" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
+                  className="w-full bg-transparent text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#FF0000] pl-2 pr-8 rounded-md text-sm"
+                  placeholder="Enter your password"
+                />
+                <div
+                  className="absolute right-2 cursor-pointer text-[#bbb]"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#FF0000] text-white rounded-md hover:bg-[#cc0000] transition-all text-sm font-medium"
+              >
+                Sign In
+              </button>
+            </div>
+          </form>
+        )}
 
         <div className="mt-3 text-center">
           <span className="text-xs text-[#888]">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            {isLogin ? "Already have an account? " : "Don't have an account? "}
           </span>
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-[#FF0000] font-medium text-xs"
+            className="text-[#FF0000] cursor-pointer font-medium text-base animate-pulse transition duration-500 ease-in-out hover:brightness-125 hover:drop-shadow-md"
           >
-            {isLogin ? "Sign Up" : "Sign In"}
+            {isLogin ? "Sign In" : "Sign Up"}
           </button>
         </div>
       </div>

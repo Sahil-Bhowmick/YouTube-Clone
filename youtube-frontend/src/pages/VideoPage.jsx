@@ -18,6 +18,8 @@ import { FaCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const commentsData = [
   { id: 1, user: "John Doe", text: "Awesome video!" },
@@ -37,14 +39,15 @@ const VideoPage = () => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [replies, setReplies] = useState({});
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [visibleReplies, setVisibleReplies] = useState({});
   const dropdownRef = useRef(null);
   const [data, setData] = useState(null);
   const [comments, setComments] = useState([]);
   const [videoUrl, setVideoUrl] = useState("");
+
   const { id } = useParams();
 
   // Fetching Video Data
-
   useEffect(() => {
     const fetchVideoById = async () => {
       try {
@@ -70,6 +73,73 @@ const VideoPage = () => {
     fetchVideoById();
     getCommentByVideoId();
   }, [id]);
+
+  // Adding comments
+  const handleComment = async () => {
+    const body = {
+      message: comment,
+      video: id,
+    };
+    await axios
+      .post("http://localhost:4000/api/comment", body, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        console.log(res);
+        const newComment = res.data.comment;
+        setComments([newComment, ...comments]);
+        setFocused(false);
+        setComment("");
+      })
+      .catch((err) => {
+        toast.error("Please Login to Add Comment.");
+        console.log(err);
+      });
+  };
+
+  // Add Reply to a Comment
+  const handleReply = async (commentId, replyMessage) => {
+    if (!replyMessage || !replyMessage.trim()) return;
+
+    const body = {
+      message: replyMessage.trim(),
+    };
+
+    try {
+      const res = await axios.post(
+        `http://localhost:4000/api/comment/${commentId}/reply`,
+        body,
+        {
+          withCredentials: true,
+        }
+      );
+
+      const newReply = res.data.reply;
+
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment._id === commentId
+            ? {
+                ...comment,
+                replies: [...(comment.replies || []), newReply],
+              }
+            : comment
+        )
+      );
+
+      // Clear input after reply
+      setReplies((prev) => ({
+        ...prev,
+        [commentId]: {
+          ...prev[commentId],
+          input: "",
+        },
+      }));
+    } catch (err) {
+      toast.error("Please Login to Reply.");
+      console.error("Reply error:", err);
+    }
+  };
 
   const isYouTubeLink = (url) => {
     return url.includes("youtube.com") || url.includes("youtu.be");
@@ -124,32 +194,23 @@ const VideoPage = () => {
     };
   }, []);
 
-  const handleReplyChange = (id, value) => {
+  const handleReplyChange = (commentId, value) => {
     setReplies((prev) => ({
       ...prev,
-      [id]: {
-        ...(prev[id] || {}),
+      [commentId]: {
+        ...prev[commentId],
         input: value,
       },
     }));
   };
 
-  const handleReplySubmit = (id) => {
-    if (replies[id]?.input?.trim()) {
-      alert(`Reply to comment ${id}: ${replies[id]?.input}`);
-      setReplies((prev) => ({
-        ...prev,
-        [id]: { show: false, input: "" },
-      }));
-    }
-  };
-
-  const toggleReplyBox = (id) => {
+  const toggleReplyBox = (commentId) => {
     setReplies((prev) => ({
       ...prev,
-      [id]: {
-        show: !prev[id]?.show,
-        input: prev[id]?.input || "",
+      [commentId]: {
+        ...prev[commentId],
+        show: !prev[commentId]?.show,
+        input: prev[commentId]?.input || "",
       },
     }));
   };
@@ -367,8 +428,16 @@ const VideoPage = () => {
             {/* Avatar + Input */}
             <div className="flex gap-3 items-start">
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center shrink-0">
-                <User size={20} className="text-white" />
+              <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
+                {localStorage.getItem("userProfilePic") ? (
+                  <img
+                    src={localStorage.getItem("userProfilePic")}
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={20} className="text-white" />
+                )}
               </div>
 
               {/* Input */}
@@ -398,11 +467,7 @@ const VideoPage = () => {
 
                     <button
                       disabled={!comment.trim()}
-                      onClick={() => {
-                        console.log("Comment:", comment);
-                        setComment("");
-                        setFocused(false);
-                      }}
+                      onClick={handleComment}
                       className={`px-5 py-2.5 rounded-full text-sm font-medium transition ${
                         comment.trim()
                           ? "bg-[#3ea6ff] text-black hover:bg-[#65b7ff]"
@@ -418,7 +483,7 @@ const VideoPage = () => {
           </div>
 
           {/* Comments List */}
-          {comments.map((comment, index) => (
+          {comments.map((comment) => (
             <div
               key={comment?._id}
               className="flex gap-3 mt-4 hover:bg-[#1c1c1c] p-2 rounded-xl transition"
@@ -467,31 +532,103 @@ const VideoPage = () => {
                   <button
                     onClick={() => toggleReplyBox(comment._id)}
                     type="button"
-                    className="hover:underline"
+                    className="text-sm text-gray-400 hover:text-white hover:underline"
                   >
-                    {replies[comment._id]?.show ? "Hide reply" : "Reply"}
+                    {comment?.replies?.length > 0
+                      ? replies[comment._id]?.show
+                        ? "Hide replies"
+                        : `View ${comment.replies.length} repl${
+                            comment.replies.length > 1 ? "ies" : "y"
+                          }`
+                      : "Reply"}
                   </button>
                 </div>
 
                 {/* Reply Input */}
                 {replies[comment._id]?.show && (
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      value={replies[comment._id]?.input || ""}
-                      onChange={(e) =>
-                        handleReplyChange(comment._id, e.target.value)
-                      }
-                      placeholder="Reply..."
-                      className="flex-1 bg-transparent border-b border-gray-600 focus:outline-none focus:border-white text-sm text-white placeholder-gray-400"
-                    />
-                    <button
-                      onClick={() => handleReplySubmit(comment._id)}
-                      type="button"
-                      className="text-blue-400 text-xs hover:underline"
-                    >
-                      Reply
-                    </button>
+                  <div className="pl-12 mt-3 space-y-4">
+                    {/* Reply Input */}
+                    <div className="flex gap-3 items-start group">
+                      {/* Avatar */}
+                      <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                        {localStorage.getItem("userProfilePic") ? (
+                          <img
+                            src={localStorage.getItem("userProfilePic")}
+                            alt="Reply avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User size={14} className="text-white" />
+                        )}
+                      </div>
+
+                      {/* Input Box */}
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={replies[comment._id]?.input || ""}
+                          onChange={(e) =>
+                            handleReplyChange(comment._id, e.target.value)
+                          }
+                          placeholder="Add a reply..."
+                          className="w-full bg-transparent border-b border-[#3f3f3f] focus:outline-none focus:border-[#aaa] text-sm text-white placeholder-gray-400 py-1 transition"
+                        />
+                        <div className="flex gap-4 mt-2 justify-end">
+                          <button
+                            onClick={() =>
+                              handleReply(
+                                comment._id,
+                                replies[comment._id]?.input
+                              )
+                            }
+                            disabled={!replies[comment._id]?.input?.trim()}
+                            className={`text-sm px-4 py-1.5 rounded-full font-medium transition ${
+                              replies[comment._id]?.input?.trim()
+                                ? "bg-[#3ea6ff] text-black hover:bg-[#65b7ff]"
+                                : "bg-[#3f3f3f] text-[#888] cursor-not-allowed"
+                            }`}
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Replies List */}
+                    {comment.replies?.map((reply) => (
+                      <div
+                        key={reply._id}
+                        className="flex gap-3 items-start group hover:bg-[#1c1c1c] px-2 py-2 rounded-xl transition"
+                      >
+                        {/* Avatar */}
+                        <div className="w-8 h-8 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center shrink-0">
+                          {reply.user?.profilePic ? (
+                            <img
+                              src={reply.user.profilePic}
+                              alt="User avatar"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User size={14} className="text-white" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-white group-hover:underline">
+                              {reply.user?.channelName || reply.user?.userName}
+                            </p>
+                            <span className="text-xs text-gray-500">
+                              • {getTimeAgo(reply.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-300">
+                            {reply.message}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -553,6 +690,15 @@ const VideoPage = () => {
           ))}
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };

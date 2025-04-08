@@ -1,20 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
 import { AiOutlineCloudUpload } from "react-icons/ai";
 import { IoMdClose } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
+import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const VideoUpload = ({ onClose }) => {
-  const [videoFile, setVideoFile] = useState(null);
-  const [videoPreview, setVideoPreview] = useState(null);
-  const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [videoState, setVideoState] = useState({
+    videoFile: null,
+    videoPreview: null,
+    thumbnailFile: null,
+    thumbnailPreview: null,
+    title: "",
+    description: "",
+    category: "",
+    uploading: false,
+    progress: 0,
+    videoLoading: false,
+    thumbnailLoading: false,
+  });
   const navigate = useNavigate();
 
   const cloudinaryPreset = "youtube-clone";
@@ -23,7 +31,56 @@ const VideoUpload = ({ onClose }) => {
   const cloudinaryImageUrl =
     "https://api.cloudinary.com/v1_1/dxfsoabsg/image/upload";
 
-  // Video Upload Dropzone
+  const updateState = (newState) => {
+    setVideoState((prev) => ({ ...prev, ...newState }));
+  };
+
+  // Flies Uploading to Cloudinary
+  const uploadFiles = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", cloudinaryPreset);
+
+    if (type === "video") {
+      updateState({ videoLoading: true });
+    } else {
+      updateState({ thumbnailLoading: true });
+    }
+
+    try {
+      const response = await axios.post(
+        type === "video" ? cloudinaryVideoUrl : cloudinaryImageUrl,
+        data
+      );
+
+      const url = response.data.secure_url;
+
+      if (type === "video") {
+        updateState({
+          videoFile: url,
+          videoPreview: URL.createObjectURL(file),
+        });
+      } else {
+        updateState({
+          thumbnailFile: url,
+          thumbnailPreview: URL.createObjectURL(file),
+        });
+      }
+    } catch (err) {
+      console.error("Upload failed:", err.message);
+      alert("Upload failed. Please try again.");
+    } finally {
+      if (type === "video") {
+        updateState({ videoLoading: false });
+      } else {
+        updateState({ thumbnailLoading: false });
+      }
+    }
+  };
+
   const { getRootProps: getVideoRootProps, getInputProps: getVideoInputProps } =
     useDropzone({
       accept: { "video/*": [] },
@@ -31,13 +88,12 @@ const VideoUpload = ({ onClose }) => {
       onDrop: (acceptedFiles) => {
         const file = acceptedFiles[0];
         if (file) {
-          setVideoFile(file);
-          setVideoPreview(URL.createObjectURL(file));
+          const fakeEvent = { target: { files: [file] } };
+          uploadFiles(fakeEvent, "video");
         }
       },
     });
 
-  // Thumbnail Upload Dropzone
   const {
     getRootProps: getThumbnailRootProps,
     getInputProps: getThumbnailInputProps,
@@ -47,98 +103,108 @@ const VideoUpload = ({ onClose }) => {
     onDrop: (acceptedFiles) => {
       const file = acceptedFiles[0];
       if (file) {
-        setThumbnailFile(file);
-        setThumbnailPreview(URL.createObjectURL(file));
+        const fakeEvent = { target: { files: [file] } };
+        uploadFiles(fakeEvent, "image");
       }
     },
   });
 
   const handleUpload = async () => {
-    if (!videoFile || !thumbnailFile) {
-      alert("Please select both a video and a thumbnail.");
+    const { title, description, category, videoFile, thumbnailFile } =
+      videoState;
+
+    if (!title || !description || !category || !videoFile || !thumbnailFile) {
+      toast.warning(
+        "Please fill out all fields and upload both video and thumbnail."
+      );
       return;
     }
 
-    setUploading(true);
-    setProgress(0);
+    const payload = {
+      title,
+      description,
+      videoLink: videoFile,
+      videoType: category,
+      thumbnail: thumbnailFile,
+    };
+
+    console.log("Uploading video with payload:", payload);
 
     try {
-      let overallProgress = 0;
+      updateState({ uploading: true });
 
-      // Function to update progress dynamically
-      const updateProgress = (progress, weight) => {
-        overallProgress += (progress * weight) / 100;
-        setProgress(Math.min(100, Math.round(overallProgress)));
-      };
-
-      const videoData = new FormData();
-      videoData.append("file", videoFile);
-      videoData.append("upload_preset", cloudinaryPreset);
-
-      const videoResponse = await axios.post(cloudinaryVideoUrl, videoData, {
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted =
-            (progressEvent.loaded / progressEvent.total) * 70;
-          updateProgress(percentCompleted, 70);
-        },
-      });
-
-      const videoUrl = videoResponse.data.secure_url;
-      setProgress(70);
-      const imageData = new FormData();
-      imageData.append("file", thumbnailFile);
-      imageData.append("upload_preset", cloudinaryPreset);
-
-      const imageResponse = await axios.post(cloudinaryImageUrl, imageData, {
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted =
-            (progressEvent.loaded / progressEvent.total) * 30;
-          updateProgress(percentCompleted, 30);
-        },
-      });
-
-      const thumbnailUrl = imageResponse.data.secure_url;
-      setProgress(100);
-
-      console.log("Video URL:", videoUrl);
-      console.log("Thumbnail URL:", thumbnailUrl);
-
-      // Show success alert after both uploads are complete
-      setTimeout(() => {
-        alert(
-          "Upload successful! 🎉 Your video and thumbnail have been uploaded."
-        );
-      }, 200);
-
-      resetForm();
-    } catch (error) {
-      console.error(
-        "Upload failed:",
-        error.response ? error.response.data : error.message
+      // const response = await axios.post(
+      //   "http://localhost:4000/api/video",
+      //   payload,
+      //   { withCredentials: true }
+      // );
+      const response = await axios.post(
+        "http://localhost:4000/api/video",
+        payload,
+        {
+          withCredentials: true,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            updateState({ progress: percentCompleted });
+          },
+        }
       );
-      alert("Upload failed. Please try again.");
-    }
 
-    setUploading(false);
+      console.log("Upload successful:", response.data);
+      toast.success("Video uploaded successfully!");
+
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+    } catch (err) {
+      console.error("Upload error:", err.response?.data || err.message);
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      updateState({ uploading: false });
+    }
   };
 
   const resetForm = () => {
-    setUploading(false);
-    setProgress(0);
-    setVideoFile(null);
-    setVideoPreview(null);
-    setThumbnailFile(null);
-    setThumbnailPreview(null);
-    setTitle("");
-    setDescription("");
-    setCategory("");
+    setVideoState({
+      videoFile: null,
+      videoPreview: null,
+      thumbnailFile: null,
+      thumbnailPreview: null,
+      title: "",
+      description: "",
+      category: "",
+      uploading: false,
+      progress: 0,
+    });
     if (onClose) onClose();
   };
 
+  useEffect(() => {
+    const isLogin = localStorage.getItem("userId");
+    if (!isLogin) {
+      toast.warning("Please login to upload a video");
+      navigate("/auth");
+    }
+  }, []);
+
+  const {
+    videoPreview,
+    thumbnailPreview,
+    title,
+    description,
+    category,
+    uploading,
+    progress,
+    videoLoading,
+    thumbnailLoading,
+  } = videoState;
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-black bg-opacity-90 p-4">
-      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-[#0F0F0F] text-white p-6 rounded-lg shadow-xl relative">
-        {/* Close Button */}
+      <div className="w-full max-w-xl bg-[#0F0F0F] text-white p-6 rounded-lg shadow-xl relative">
         <button
           className="absolute top-3 right-3 text-gray-400 hover:text-white transition"
           onClick={resetForm}
@@ -148,8 +214,14 @@ const VideoUpload = ({ onClose }) => {
 
         <h2 className="text-xl font-semibold mb-4 text-center">Upload Video</h2>
 
-        {/* Video Upload */}
-        {!videoPreview && (
+        {videoLoading ? (
+          <div className="flex flex-col justify-center items-center mt-3 space-y-2">
+            <CircularProgress style={{ color: "red" }} />
+            <p className="text-sm text-gray-300">
+              Uploading video... Please wait
+            </p>
+          </div>
+        ) : !videoPreview ? (
           <div
             {...getVideoRootProps()}
             className="mt-3 border border-gray-600 rounded-lg p-6 text-center cursor-pointer bg-[#222] hover:bg-[#333] transition"
@@ -166,10 +238,7 @@ const VideoUpload = ({ onClose }) => {
               MP4, AVI, MKV (Max: 2GB)
             </p>
           </div>
-        )}
-
-        {/* Video Preview */}
-        {videoPreview && (
+        ) : (
           <div className="mt-3 relative bg-[#222] p-2 rounded-lg shadow-md">
             <video
               src={videoPreview}
@@ -178,21 +247,26 @@ const VideoUpload = ({ onClose }) => {
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition"
-              onClick={() => {
-                setVideoFile(null);
-                setVideoPreview(null);
-              }}
+              onClick={() =>
+                updateState({ videoFile: null, videoPreview: null })
+              }
             >
               <IoMdClose size={18} />
             </button>
           </div>
         )}
 
-        {/* Thumbnail Upload */}
         <h3 className="text-lg font-semibold mt-5 text-center">
           Upload Thumbnail
         </h3>
-        {!thumbnailPreview && (
+        {thumbnailLoading ? (
+          <div className="flex flex-col justify-center items-center mt-3 space-y-2">
+            <CircularProgress style={{ color: "red" }} />
+            <p className="text-sm text-gray-300">
+              Uploading thumbnail... Please wait
+            </p>
+          </div>
+        ) : !thumbnailPreview ? (
           <div
             {...getThumbnailRootProps()}
             className="mt-3 border border-gray-600 rounded-lg p-6 text-center cursor-pointer bg-[#222] hover:bg-[#333] transition"
@@ -205,10 +279,7 @@ const VideoUpload = ({ onClose }) => {
             <p className="text-sm text-gray-400">Drag & drop an image here</p>
             <p className="text-xs text-gray-500 mt-1">JPEG, PNG (Max: 5MB)</p>
           </div>
-        )}
-
-        {/* Thumbnail Preview */}
-        {thumbnailPreview && (
+        ) : (
           <div className="mt-3 relative bg-[#222] p-2 rounded-lg shadow-md">
             <img
               src={thumbnailPreview}
@@ -217,17 +288,16 @@ const VideoUpload = ({ onClose }) => {
             />
             <button
               className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition"
-              onClick={() => {
-                setThumbnailFile(null);
-                setThumbnailPreview(null);
-              }}
+              onClick={() =>
+                updateState({ thumbnailFile: null, thumbnailPreview: null })
+              }
             >
               <IoMdClose size={18} />
             </button>
           </div>
         )}
 
-        {/* Title, Category & Description */}
+        {/* Title */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-400">
             Title
@@ -236,11 +306,12 @@ const VideoUpload = ({ onClose }) => {
             type="text"
             className="w-full border bg-[#222] p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => updateState({ title: e.target.value })}
             placeholder="Enter video title"
           />
         </div>
 
+        {/* Category */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-400">
             Category
@@ -249,11 +320,12 @@ const VideoUpload = ({ onClose }) => {
             type="text"
             className="w-full border bg-[#222] p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => updateState({ category: e.target.value })}
             placeholder="Enter video category"
           />
         </div>
 
+        {/* Description */}
         <div className="mt-3">
           <label className="block text-sm font-medium text-gray-400">
             Description
@@ -261,14 +333,13 @@ const VideoUpload = ({ onClose }) => {
           <textarea
             className="w-full border bg-[#222] p-2 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => updateState({ description: e.target.value })}
             placeholder="Enter video description"
           ></textarea>
         </div>
 
-        {/* Upload Button */}
+        {/* Buttons */}
         <div className="mt-5 flex gap-4">
-          {/* Upload Button */}
           <button
             onClick={handleUpload}
             disabled={uploading}
@@ -280,8 +351,6 @@ const VideoUpload = ({ onClose }) => {
           >
             {uploading ? "Uploading..." : "Upload Video"}
           </button>
-
-          {/* Go Home Button */}
           <button
             onClick={() => navigate("/")}
             className="flex-1 py-2 bg-red-500 hover:bg-red-700 text-white font-medium rounded-lg transition cursor-pointer"
@@ -289,21 +358,35 @@ const VideoUpload = ({ onClose }) => {
             Go Home
           </button>
         </div>
-        {/* Progress Bar */}
+
+        {/* Progress */}
         {uploading && (
           <div className="mt-4">
-            <div className="relative w-full bg-gray-700 h-3 rounded-lg overflow-hidden">
-              <div
-                className="absolute top-0 left-0 h-full bg-red-500 transition-all duration-500 ease-in-out"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p className="text-center text-sm text-gray-300 mt-2">
-              Uploading... {progress}%
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{
+                backgroundColor: "#333",
+                "& .MuiLinearProgress-bar": {
+                  backgroundColor: "#ef4444", // Tailwind red-500
+                },
+              }}
+            />
+            <p className="text-sm text-gray-400 mt-2 text-center">
+              Uploading: {progress}%
             </p>
           </div>
         )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };
