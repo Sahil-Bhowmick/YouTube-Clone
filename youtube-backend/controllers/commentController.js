@@ -29,7 +29,7 @@ export const addComment = async (req, res) => {
 
     const populatedComment = await Comment.findById(newComment._id).populate(
       "user",
-      "username email"
+      "username email profilePic"
     );
 
     res.status(201).json({
