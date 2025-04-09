@@ -51,7 +51,7 @@ const VideoPage = () => {
     const fetchVideoById = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:4000/api/getVideoById/${id}`
+          `https://youtube-clone-backend-a0an.onrender.com/api/getVideoById/${id}`
         );
         setData(res?.data?.video);
         setVideoUrl(res?.data?.video?.videoLink || "");
@@ -62,7 +62,7 @@ const VideoPage = () => {
 
     const getCommentByVideoId = async () => {
       try {
-        const res = await axios.get(`http://localhost:4000/api/comment/${id}`);
+        const res = await axios.get(`https://youtube-clone-backend-a0an.onrender.com/api/comment/${id}`);
         setComments(res?.data?.comments || []);
       } catch (err) {
         console.error(err);
@@ -80,7 +80,7 @@ const VideoPage = () => {
       video: id,
     };
     await axios
-      .post("http://localhost:4000/api/comment", body, {
+      .post("https://youtube-clone-backend-a0an.onrender.com/api/comment", body, {
         withCredentials: true,
       })
       .then((res) => {
@@ -110,7 +110,7 @@ const VideoPage = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:4000/api/comment/${commentId}/reply`,
+        `https://youtube-clone-backend-a0an.onrender.com/api/comment/${commentId}/reply`,
         body,
         {
           withCredentials: true,
