@@ -109,7 +109,7 @@ const AuthPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/auth/signUp",
+        "https://youtube-clone-backend-a0an.onrender.com/auth/signUp",
         cleanFormData
       );
       console.log(res);
@@ -149,7 +149,7 @@ const AuthPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:4000/auth/login",
+        "https://youtube-clone-backend-a0an.onrender.com/auth/login",
         cleanFormData,
         { withCredentials: true }
       );
