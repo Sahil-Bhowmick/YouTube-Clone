@@ -134,12 +134,12 @@ const VideoUpload = ({ onClose }) => {
       updateState({ uploading: true });
 
       // const response = await axios.post(
-      //   "http://localhost:4000/api/video",
+      //   "https://youtube-clone-backend-a0an.onrender.com/api/video",
       //   payload,
       //   { withCredentials: true }
       // );
       const response = await axios.post(
-        "http://localhost:4000/api/video",
+        "https://youtube-clone-backend-a0an.onrender.com/api/video",
         payload,
         {
           withCredentials: true,
