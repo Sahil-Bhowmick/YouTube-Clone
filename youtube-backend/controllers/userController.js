@@ -9,8 +9,10 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // Set secure cookies in production
-  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  secure: false, // In development, secure should be false
+  sameSite: "Lax", // Lax works fine for development
+  // secure: process.env.NODE_ENV === "production", // Set secure cookies in production
+  // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
