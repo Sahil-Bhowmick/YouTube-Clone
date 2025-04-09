@@ -7,14 +7,21 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// const cookieOptions = {
+//   httpOnly: true,
+//   secure: false, // In development, secure should be false
+//   sameSite: "Lax", // Lax works fine for development
+//   // secure: process.env.NODE_ENV === "production", // Set secure cookies in production
+//   // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+//   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+// };
 const cookieOptions = {
   httpOnly: true,
-  secure: false, // In development, secure should be false
-  sameSite: "Lax", // Lax works fine for development
-  // secure: process.env.NODE_ENV === "production", // Set secure cookies in production
-  // sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  secure: process.env.NODE_ENV === "production", // True in production (HTTPS)
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
+
 
 // SIGNUP Controller
 export const signUp = async (req, res) => {
