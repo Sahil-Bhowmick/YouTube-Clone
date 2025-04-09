@@ -25,7 +25,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       axios
-        .get(`http://localhost:4000/api/${id}/channel`)
+        .get(`https://youtube-clone-backend-a0an.onrender.com/api/${id}/channel`)
         .then((res) => {
           setData(res.data.video);
           setUser(res.data.video[0]?.user);
