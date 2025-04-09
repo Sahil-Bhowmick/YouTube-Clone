@@ -45,7 +45,7 @@ export default function HomePage({ searchQuery }) {
 
   useEffect(() => {
     axios
-      .get("http://localhost:4000/api/allVideo")
+      .get("https://youtube-clone-backend-a0an.onrender.com/api/allVideo")
       .then((res) => {
         setData(res.data?.videos || []);
       })
@@ -191,7 +191,7 @@ export default function HomePage({ searchQuery }) {
             key={video?._id || idx}
             to={`/watch/${video?._id}`}
             onClick={() =>
-              axios.put(`http://localhost:4000/api/video/views/${video?._id}`)
+              axios.put(`https://youtube-clone-backend-a0an.onrender.com/api/video/views/${video?._id}`)
             }
             className="cursor-pointer group"
           >
@@ -270,3 +270,4 @@ export default function HomePage({ searchQuery }) {
     </div>
   );
 }
+
