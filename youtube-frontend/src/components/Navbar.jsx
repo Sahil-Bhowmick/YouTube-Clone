@@ -70,7 +70,7 @@ export default function Navbar({ setMobileMenuOpen, onSearch }) {
 
       // Logout from backend
       await axios.post(
-        "http://localhost:4000/auth/logout",
+        "https://youtube-clone-backend-a0an.onrender.com/auth/logout",
         {},
         { withCredentials: true }
       );
