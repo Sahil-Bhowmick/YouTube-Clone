@@ -138,11 +138,15 @@ const VideoUpload = ({ onClose }) => {
       //   payload,
       //   { withCredentials: true }
       // );
+      const token = localStorage.getItem("authToken"); // or get it from state if you're storing it there
+
       const response = await axios.post(
         "https://youtube-clone-backend-a0an.onrender.com/api/video",
         payload,
         {
           withCredentials: true,
+           headers: {
+      Authorization: `Bearer ${token}`,
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
