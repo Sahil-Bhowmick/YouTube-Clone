@@ -170,17 +170,21 @@ const VideoUpload = ({ onClose }) => {
   //     updateState({ uploading: false });
   //   }
   // };
-  const handleUpload = async () => {
-  // Extract relevant data from state or form inputs
+ const handleUpload = async () => {
   const { title, description, category, videoFile, thumbnailFile } = videoState;
 
-  // Check if all required fields are filled out
   if (!title || !description || !category || !videoFile || !thumbnailFile) {
     toast.warning("Please fill out all fields and upload both video and thumbnail.");
     return;
   }
 
-  // Create payload for the request
+  const token = localStorage.getItem("token"); // 👈 get token here
+
+  if (!token) {
+    toast.error("You must be logged in to upload a video.");
+    return;
+  }
+
   const payload = {
     title,
     description,
@@ -189,31 +193,18 @@ const VideoUpload = ({ onClose }) => {
     thumbnail: thumbnailFile,
   };
 
-  console.log("Uploading video with payload:", payload);
-
   try {
-    // Set uploading state to true for UI feedback
     updateState({ uploading: true });
 
-    // Retrieve the authentication token from localStorage (or another storage mechanism)
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      toast.error("You are not logged in. Please log in first.");
-      return;
-    }
-
-    // Make the API request to upload the video
     const response = await axios.post(
       "https://youtube-clone-backend-a0an.onrender.com/api/video",
       payload,
       {
-        withCredentials: true,
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // 👈 pass token here
         },
+        withCredentials: true,
         onUploadProgress: (progressEvent) => {
-          // Calculate and update upload progress
           const percentCompleted = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
@@ -222,20 +213,12 @@ const VideoUpload = ({ onClose }) => {
       }
     );
 
-    // If upload is successful
-    console.log("Upload successful:", response.data);
     toast.success("Video uploaded successfully!");
-
-    // Redirect after 3 seconds
-    setTimeout(() => {
-      navigate("/"); // Navigate to another page after successful upload
-    }, 3000);
+    setTimeout(() => navigate("/"), 3000);
   } catch (err) {
-    // Handle errors (e.g., server errors, network issues)
     console.error("Upload error:", err.response?.data || err.message);
     toast.error("Upload failed. Please try again.");
   } finally {
-    // Reset uploading state after the process is complete
     updateState({ uploading: false });
   }
 };
