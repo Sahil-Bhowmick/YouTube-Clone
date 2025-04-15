@@ -6,10 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const auth = async (req, res, next) => {
   const token = req.cookies?.token;
 
-   // ✅ Check Authorization header if cookie not found
-  if (!token && req.headers.authorization?.startsWith("Bearer ")) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+  
 
   if (!token) {
     return res.status(401).json({ error: "No token, authorization denied" });
