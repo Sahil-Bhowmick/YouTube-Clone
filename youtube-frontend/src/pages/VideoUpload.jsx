@@ -196,7 +196,7 @@ const VideoUpload = ({ onClose }) => {
     updateState({ uploading: true });
 
     // Retrieve the authentication token from localStorage (or another storage mechanism)
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("token");
 
     if (!token) {
       toast.error("You are not logged in. Please log in first.");
