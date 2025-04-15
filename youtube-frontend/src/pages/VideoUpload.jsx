@@ -109,7 +109,7 @@ const VideoUpload = ({ onClose }) => {
     },
   });
 
-  const handleUpload = async () => {
+ const handleUpload = async () => {
     const { title, description, category, videoFile, thumbnailFile } =
       videoState;
 
@@ -138,8 +138,6 @@ const VideoUpload = ({ onClose }) => {
         payload,
         {
           withCredentials: true,
-           headers: {
-      Authorization: `Bearer ${token}`,
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
