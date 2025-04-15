@@ -109,120 +109,60 @@ const VideoUpload = ({ onClose }) => {
     },
   });
 
-  // const handleUpload = async () => {
-  //   const { title, description, category, videoFile, thumbnailFile } =
-  //     videoState;
+  const handleUpload = async () => {
+    const { title, description, category, videoFile, thumbnailFile } =
+      videoState;
 
-  //   if (!title || !description || !category || !videoFile || !thumbnailFile) {
-  //     toast.warning(
-  //       "Please fill out all fields and upload both video and thumbnail."
-  //     );
-  //     return;
-  //   }
+    if (!title || !description || !category || !videoFile || !thumbnailFile) {
+      toast.warning(
+        "Please fill out all fields and upload both video and thumbnail."
+      );
+      return;
+    }
 
-  //   const payload = {
-  //     title,
-  //     description,
-  //     videoLink: videoFile,
-  //     videoType: category,
-  //     thumbnail: thumbnailFile,
-  //   };
+    const payload = {
+      title,
+      description,
+      videoLink: videoFile,
+      videoType: category,
+      thumbnail: thumbnailFile,
+    };
 
-  //   console.log("Uploading video with payload:", payload);
+    console.log("Uploading video with payload:", payload);
 
-  //   try {
-  //     updateState({ uploading: true });
+    try {
+      updateState({ uploading: true });
+      
+      const response = await axios.post(
+        "https://youtube-clone-backend-a0an.onrender.com/api/video",
+        payload,
+        {
+          withCredentials: true,
+           headers: {
+      Authorization: `Bearer ${token}`,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            updateState({ progress: percentCompleted });
+          },
+        }
+      );
 
-  //     // const response = await axios.post(
-  //     //   "https://youtube-clone-backend-a0an.onrender.com/api/video",
-  //     //   payload,
-  //     //   { withCredentials: true }
-  //     // );
-  //     const token = localStorage.getItem("authToken"); // or get it from state if you're storing it there
+      console.log("Upload successful:", response.data);
+      toast.success("Video uploaded successfully!");
 
-  //     const response = await axios.post(
-  //       "https://youtube-clone-backend-a0an.onrender.com/api/video",
-  //       payload,
-  //       {
-  //         withCredentials: true,
-  //          headers: {
-  //     Authorization: `Bearer ${token}`,
-  //         onUploadProgress: (progressEvent) => {
-  //           const percentCompleted = Math.round(
-  //             (progressEvent.loaded * 100) / progressEvent.total
-  //           );
-  //           updateState({ progress: percentCompleted });
-  //         },
-  //       }
-  //     );
-
-  //     console.log("Upload successful:", response.data);
-  //     toast.success("Video uploaded successfully!");
-
-  //     // Redirect after 3 seconds
-  //     setTimeout(() => {
-  //       navigate("/");
-  //     }, 3000);
-  //   } catch (err) {
-  //     console.error("Upload error:", err.response?.data || err.message);
-  //     toast.error("Upload failed. Please try again.");
-  //   } finally {
-  //     updateState({ uploading: false });
-  //   }
-  // };
- const handleUpload = async () => {
-  const { title, description, category, videoFile, thumbnailFile } = videoState;
-
-  if (!title || !description || !category || !videoFile || !thumbnailFile) {
-    toast.warning("Please fill out all fields and upload both video and thumbnail.");
-    return;
-  }
-
-  const token = localStorage.getItem("token"); // 👈 get token here
-
-  if (!token) {
-    toast.error("You must be logged in to upload a video.");
-    return;
-  }
-
-  const payload = {
-    title,
-    description,
-    videoLink: videoFile,
-    videoType: category,
-    thumbnail: thumbnailFile,
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+    } catch (err) {
+      console.error("Upload error:", err.response?.data || err.message);
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      updateState({ uploading: false });
+    }
   };
-
-  try {
-    updateState({ uploading: true });
-
-    const response = await axios.post(
-      "https://youtube-clone-backend-a0an.onrender.com/api/video",
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // 👈 pass token here
-        },
-        withCredentials: true,
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          updateState({ progress: percentCompleted });
-        },
-      }
-    );
-
-    toast.success("Video uploaded successfully!");
-    setTimeout(() => navigate("/"), 3000);
-  } catch (err) {
-    console.error("Upload error:", err.response?.data || err.message);
-    toast.error("Upload failed. Please try again.");
-  } finally {
-    updateState({ uploading: false });
-  }
-};
-
 
   const resetForm = () => {
     setVideoState({
